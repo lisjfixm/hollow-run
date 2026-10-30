@@ -1,0 +1,1965 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+
+<script>
+/* === OFFLINE POLYFILL (Sekai platform -> localStorage) === */
+(function(){
+  var SAVE_KEY = 'hollow-run-save-v1';
+  var _data = {};
+  try { _data = JSON.parse(localStorage.getItem(SAVE_KEY) || '{}'); } catch(e) { _data = {}; }
+  function save(){ try { localStorage.setItem(SAVE_KEY, JSON.stringify(_data)); } catch(e){} }
+  window.__sekaiSave = {
+    ready: Promise.resolve(),
+    getItem: function(k){ return _data[k] !== undefined ? _data[k] : null; },
+    setItem: function(k,v){ _data[k]=v; save(); },
+    removeItem: function(k){ delete _data[k]; save(); }
+  };
+  window.getConfig = function(cat,id,fallback){ return fallback; };
+  window.LHB = { onAudio: null, pending: [] };
+  window.__hollowReady = false;
+  setTimeout(function(){ window.__hollowReady = true; }, 600);
+})();
+</script>
+<script data-sekai-game-document-surface="1">(function(){var root=document.documentElement;if(root&&root.getAttribute('data-sekai-game-document-surface')==='1')return;var styleMap={'-webkit-tap-highlight-color':'transparent','-webkit-touch-callout':'none','-webkit-user-select':'none','height':'100%','overscroll-behavior':'contain','user-select':'none'};function applyTo(el){if(!el||!el.style||typeof el.style.setProperty!=='function')return;for(var prop in styleMap){if(Object.prototype.hasOwnProperty.call(styleMap,prop)){el.style.setProperty(prop,styleMap[prop]);}}}function applyDocumentStyles(){applyTo(document.documentElement);applyTo(document.body);}var style=document.createElement('style');style.setAttribute('data-sekai-game-document-surface','1');style.textContent="* {\n  -webkit-tap-highlight-color: transparent !important;\n  -webkit-touch-callout: none !important;\n  -webkit-user-select: none !important;\n  touch-action: manipulation !important;\n  user-select: none !important;\n}\n\ninput, textarea, [contenteditable] {\n  -webkit-touch-callout: none !important;\n  -webkit-user-select: none !important;\n  user-select: none !important;\n}\n\ncanvas {\n  -webkit-touch-callout: none !important;\n  -webkit-user-select: none !important;\n  touch-action: manipulation !important;\n  user-select: none !important;\n}\n\n#mp-error-overlay > button[style*=\"background:white\"] {\n  color: #111;\n}";var head=document.head||document.getElementsByTagName('head')[0];if(head)head.appendChild(style);else if(root)root.insertBefore(style,root.firstChild);if(document.body){applyDocumentStyles();}else if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded',applyDocumentStyles);}else{applyDocumentStyles();}if(root)root.setAttribute('data-sekai-game-document-surface','1');})();</script><script data-sekai-iframe-diagnostics="1">(function(){if(window.__sekai_iframe_diag_installed)return;window.__sekai_iframe_diag_installed=true;function post(type,payload){try{payload=payload||{};window.parent.postMessage(Object.assign({type:type,data:payload},payload),'*');}catch(_){}}function now(){try{return window.performance&&performance.now?performance.now():Date.now();}catch(_){return Date.now();}}function safe(a){try{if(a===undefined)return'undefined';if(a===null)return'null';if(typeof a==='string')return a;if(typeof a==='number'||typeof a==='boolean')return String(a);if(a instanceof Error)return a.name+': '+a.message+(a.stack?'\n'+a.stack:'');return JSON.stringify(a);}catch(_){return'<unserializable>';}}function hook(level){var orig=console[level];if(typeof orig!=='function')return;console[level]=function(){var args=[];for(var i=0;i<arguments.length;i++)args.push(safe(arguments[i]));post('sekai_iframe_console',{level:level,line:args.join(' ')});try{orig.apply(console,arguments);}catch(_){}};}['log','info','warn','error','debug'].forEach(hook);function vp(){try{var de=document.documentElement,b=document.body,vv=window.visualViewport;return{ih:window.innerHeight,iw:window.innerWidth,deCH:de&&de.clientHeight,deCW:de&&de.clientWidth,boH:b&&b.offsetHeight,boW:b&&b.offsetWidth,sh:window.screen&&screen.height,sw:window.screen&&screen.width,vvH:vv&&vv.height,vvW:vv&&vv.width,rs:document.readyState};}catch(e){return{err:String(e)}}}function pp(tag,extra){post('sekai_iframe_perf_trace',{tag:tag,ts:now(),extra:extra||null});}pp('diag:installed',vp());document.addEventListener('readystatechange',function(){pp('diag:readystate',{state:document.readyState,vp:vp()});});window.addEventListener('message',function(e){if(!(e.data&&e.data.type==='viewport_height_change'))return;var f=e.data.data&&typeof e.data.data==='object'&&!Array.isArray(e.data.data)?Object.assign(Object.create(null),e.data,e.data.data):e.data;var before=vp();setTimeout(function(){pp('diag:viewport_msg',{h:f.height,before:before,after:vp()});},0);});window.addEventListener('DOMContentLoaded',function(){pp('diag:DCL',vp());try{var cs=document.querySelectorAll('canvas');for(var i=0;i<cs.length;i++){var c=cs[i],r=c.getBoundingClientRect();pp('diag:canvas',{i:i,id:c.id||'',cls:c.className||'',w:c.width,h:c.height,sw:Math.round(r.width),sh:Math.round(r.height),sl:Math.round(r.left),st:Math.round(r.top)});}pp('diag:DCL:scan',{canvas:cs.length});}catch(e){pp('diag:canvas:error',{err:String(e)});}});window.addEventListener('load',function(){pp('diag:window.load',vp());});})();</script><script data-sekai-native-storage-guard="1">(function(){if(window.__sekai_native_storage_guard_installed)return;window.__sekai_native_storage_guard_installed=true;var SEED={};var NATIVE=false;var pendingSync=null;var syncTarget=null;function postSync(map){if(!NATIVE)return;try{var p=window.parent;if(!p||p===window||typeof p.postMessage!=="function")return;p.postMessage({type:"sekai:ls_sync",data:{map:map}},"*");}catch(_e){}}function snapshot(d){var out={};for(var k in d){if(Object.prototype.hasOwnProperty.call(d,k))out[k]=d[k];}return out;}function flushSync(){if(pendingSync){try{window.clearTimeout(pendingSync);}catch(_e){}pendingSync=null;}if(syncTarget)postSync(snapshot(syncTarget));}function scheduleSync(d){syncTarget=d;if(pendingSync)return;try{pendingSync=window.setTimeout(function(){pendingSync=null;postSync(snapshot(d));},100);}catch(_e){pendingSync=null;postSync(snapshot(d));}}function memoryStorage(seed){var d={};if(seed){for(var sk in seed){if(Object.prototype.hasOwnProperty.call(seed,sk))d[String(sk)]=String(seed[sk]);}}return{get length(){return Object.keys(d).length},key:function(i){var k=Object.keys(d);return i>=0&&i<k.length?k[i]:null},getItem:function(k){k=String(k);return Object.prototype.hasOwnProperty.call(d,k)?d[k]:null},setItem:function(k,v){d[String(k)]=String(v);scheduleSync(d)},removeItem:function(k){delete d[String(k)];scheduleSync(d)},clear:function(){for(var k in d){if(Object.prototype.hasOwnProperty.call(d,k))delete d[k];}scheduleSync(d)}};}function usable(name){try{var s=window[name];if(!s)return false;var k="__sekai_probe__";s.setItem(k,"1");s.removeItem(k);return true;}catch(_e){return false;}}function installStorage(name,seed){if(!NATIVE&&usable(name))return;try{Object.defineProperty(window,name,{configurable:true,enumerable:true,writable:false,value:memoryStorage(seed)});}catch(_e){}}installStorage("localStorage",SEED);installStorage("sessionStorage",null);try{window.addEventListener("pagehide",flushSync);}catch(_e){}try{window.document.addEventListener("visibilitychange",function(){if(window.document.visibilityState==="hidden")flushSync();});}catch(_e){}if(!(window.innerWidth>0&&window.innerHeight>0)){var started=Date.now();var settle=function(){if(window.innerWidth>0&&window.innerHeight>0){var event;try{event=new window.Event("resize");}catch(_e){event=window.document.createEvent("Event");event.initEvent("resize",false,false);}window.dispatchEvent(event);return;}if(Date.now()-started<3000)window.requestAnimationFrame(settle);};window.requestAnimationFrame(settle);}})();</script><script data-sekai-visual-ready="1">(function(){try{if(window.__sekai_visual_ready_installed)return;window.__sekai_visual_ready_installed=true;var sent=false,lateSent=false,fcpMs=null,graceId=null,graceFired=false;var cpDone=false,cpPending=false,cpMs=null,moRef=null,origGetContext=null,patchedCtx=[];var _origSetTimeout=window.setTimeout,_origClearTimeout=window.clearTimeout;function emit(source){try{var f={source:source,fcp_ms:fcpMs==null?null:Math.round(fcpMs),content_ms:cpMs==null?null:Math.round(cpMs),vis:document.visibilityState};window.parent.postMessage({type:'sekai_iframe_visual_ready',source:f.source,fcp_ms:f.fcp_ms,content_ms:f.content_ms,vis:f.vis,data:f},'*');}catch(_a){}}function post(source){if(sent)return;sent=true;try{cpRestore();}catch(_pr){}try{window.__sekaiVisualReady=source;}catch(_p){}emit(source);}function postLate(){if(!sent||lateSent||fcpMs==null||!graceFired)return;lateSent=true;emit('fcp_late');}function confirmFrame(source){if(typeof window.requestAnimationFrame!=='function'){post(source+'_no_raf');return;}window.requestAnimationFrame(function(){window.requestAnimationFrame(function(){post(source);});});}function cpRestore(){try{if(moRef)moRef.disconnect();}catch(_r1){}moRef=null;try{if(origGetContext&&window.HTMLCanvasElement)window.HTMLCanvasElement.prototype.getContext=origGetContext;}catch(_r2){}origGetContext=null;for(var _ri=0;_ri<patchedCtx.length;_ri++){try{var _pc=patchedCtx[_ri];for(var _k in _pc.o)_pc.c[_k]=_pc.o[_k];}catch(_r3){}}patchedCtx.length=0;}function cpSeen(kind){if(cpDone||sent)return;cpDone=true;try{cpMs=(window.performance&&window.performance.now)?window.performance.now():null;}catch(_c1){}cpRestore();confirmFrame("content_"+kind);}function cpVisible(el){try{var r=el.getBoundingClientRect();if(!(r.width>0&&r.height>0))return false;var cs=window.getComputedStyle?window.getComputedStyle(el):null;if(!cs)return true;return cs.visibility!=="hidden"&&cs.display!=="none"&&parseFloat(cs.opacity||"1")>0;}catch(_v){return false;}}function cpScan(){cpPending=false;if(cpDone||sent)return;var b=document.body;if(!b)return;try{var reps=b.querySelectorAll("img,video,svg,picture");for(var i=0;i<reps.length;i++){if(cpVisible(reps[i])){cpSeen("dom");return;}}}catch(_s1){}try{if((b.innerText||"").replace(/\s+/g,"").length>0&&cpVisible(b)){cpSeen("dom");return;}}catch(_s2){}try{var kids=b.children||[];for(var j=0;j<kids.length&&j<12;j++){var cs2=window.getComputedStyle?window.getComputedStyle(kids[j]):null;if(!cs2)continue;var hasBg=(cs2.backgroundImage&&cs2.backgroundImage!=="none")||(cs2.backgroundColor&&cs2.backgroundColor!=="rgba(0, 0, 0, 0)"&&cs2.backgroundColor!=="transparent");if(hasBg&&cpVisible(kids[j])){cpSeen("dom");return;}}}catch(_s3){}}try{if(window.MutationObserver&&document.documentElement){moRef=new window.MutationObserver(function(){if(cpPending||cpDone||sent)return;cpPending=true;try{window.requestAnimationFrame(cpScan);}catch(_m1){cpPending=false;}});moRef.observe(document.documentElement,{childList:true,subtree:true,attributes:true,attributeFilter:["style","class","src","hidden"]});}}catch(_m2){}var CP_2D=["drawImage","fillText","strokeText","fill","stroke","fillRect","putImageData"];var CP_GL=["drawArrays","drawElements","drawArraysInstanced","drawElementsInstanced"];function cpPatch(c,names){try{var o={};for(var i=0;i<names.length;i++){(function(n){var f=c[n];if(typeof f!=="function")return;o[n]=f;c[n]=function(){try{cpSeen("canvas");}catch(_p1){}return f.apply(this,arguments);};})(names[i]);}patchedCtx.push({c:c,o:o});}catch(_p2){}}try{if(window.HTMLCanvasElement&&window.HTMLCanvasElement.prototype&&typeof window.HTMLCanvasElement.prototype.getContext==="function"){origGetContext=window.HTMLCanvasElement.prototype.getContext;window.HTMLCanvasElement.prototype.getContext=function(){var ctx=origGetContext.apply(this,arguments);try{if(ctx&&!ctx.__sekaiCpPatched){ctx.__sekaiCpPatched=true;cpPatch(ctx,String(arguments[0]||"").indexOf("webgl")===0?CP_GL:CP_2D);}}catch(_g1){}return ctx;};}}catch(_g2){}function afterDom(){if(fcpMs!=null){confirmFrame('fcp');return;}try{graceId=_origSetTimeout.call(window,function(){graceId=null;graceFired=true;confirmFrame('raf_fallback');},2000);}catch(_b){graceFired=true;confirmFrame('raf_fallback');}}try{if(window.PerformanceObserver){var po=new PerformanceObserver(function(list){var es=list.getEntries();for(var i=0;i<es.length;i++){if(es[i].name!=='first-contentful-paint')continue;fcpMs=es[i].startTime;try{po.disconnect();}catch(_c){}if(graceId!=null){try{_origClearTimeout.call(window,graceId);}catch(_d){}graceId=null;}if(graceFired){postLate();return;}if(document.readyState!=='loading')confirmFrame('fcp');return;}});po.observe({type:'paint',buffered:true});}}catch(_e){}if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',afterDom);else afterDom();}catch(_f){}})();</script><script data-sekai-first-trusted-input="1">(function(){try{if(window.__sekai_first_trusted_input_installed)return;window.__sekai_first_trusted_input_installed=true;var opts={passive:true,capture:true},done=false;function off(){document.removeEventListener('pointerdown',onPointer,opts);document.removeEventListener('keydown',onKey,opts);}function fire(e,kind){if(done||!e||e.isTrusted!==true)return;done=true;off();try{window.parent.postMessage({type:'sekai:first_trusted_input',data:{kind:kind}},'*');}catch(_){}}function onPointer(e){fire(e,'pointer');}function onKey(e){fire(e,'key');}document.addEventListener('pointerdown',onPointer,opts);document.addEventListener('keydown',onKey,opts);}catch(_e){}})();</script><script data-sekai-mini-app-interaction="1">(function(){try{if(window.__sekai_mini_app_interaction_installed)return;window.__sekai_mini_app_interaction_installed=true;var opts={passive:true,capture:true},slop=8,down=null;function post(m){try{window.parent.postMessage(m,'*');}catch(_){}}function notify(){post({type:'sekai:mini_app_interacted'});}function strayed(e){var dx=e.clientX-down.x,dy=e.clientY-down.y;return dx*dx+dy*dy>slop*slop;}document.addEventListener('pointerdown',function(e){notify();down=e.isPrimary===false?null:{id:e.pointerId,x:e.clientX,y:e.clientY};},opts);document.addEventListener('pointermove',function(e){if(down&&e.pointerId===down.id&&strayed(e))down=null;},opts);document.addEventListener('pointerup',function(e){if(!down||e.pointerId!==down.id)return;var tap=!strayed(e);down=null;if(tap)post({type:'sekai:mini_app_interacted',payload:{tap:true},data:{tap:true}});},opts);document.addEventListener('pointercancel',function(e){if(down&&e.pointerId===down.id)down=null;},opts);}catch(_e){}})();</script><script data-sekai-runtime-lifecycle="1">(function(){try{if(window.__sekai_runtime_lifecycle_installed)return;window.__sekai_runtime_lifecycle_installed=true;var _frozen=false,_rafIds=[],_rafMap={},_frozenRafFns=[],_timerSeq=1,_timeouts={},_intervals={},_mediaResume=[];var _quietArmed=false,_quietWaits=0,_quietSent=false;function _quietNow(){if(_quietSent)return;_quietSent=true;try{window.parent.postMessage({origin:"sekai_gaming_iframe_api",type:"sekai_iframe_quiet"},"*");}catch(_eqn){}}function _quietWait(){_quietWaits++;}function _quietDone(){if(_quietWaits>0)_quietWaits--;if(_quietArmed&&_quietWaits<=0)_quietNow();}function _quietFade(el){if(!el.__sekaiQuietOn){el.__sekaiQuietOn=1;_quietWait();}}function _quietFaded(el){if(el.__sekaiQuietOn){el.__sekaiQuietOn=0;_quietDone();}}function _quietArm(){if(_quietArmed)return;_quietArmed=true;_quietWait();try{_origST(function(){_quietDone();},60);}catch(_eq){_quietDone();}}var _rafDeferred=false,_rafDeferUsed=false,_rafDeferTimer=null,_rafDeferPoll=null;function _pp(t,x){try{var f={tag:t,ts:performance&&performance.now?performance.now():Date.now(),extra:x||null};window.parent.postMessage({type:"sekai_iframe_perf_trace",tag:f.tag,ts:f.ts,extra:f.extra,data:f},"*");}catch(_){}}window.__sekaiRuntimeFrozen=false;window.__sekaiIsRuntimeFrozen=function(){return _frozen;};var _origRAF=window.requestAnimationFrame;var _origCAF=window.cancelAnimationFrame;if(_origRAF&&_origCAF){window.requestAnimationFrame=function(fn){if(_frozen&&!_rafDeferred){_frozenRafFns.push(fn);_pp("raf:frozen_push",{cnt:_frozenRafFns.length});return -1;}var id;var w=function(ts){var idx=_rafIds.indexOf(id);if(idx>=0)_rafIds.splice(idx,1);delete _rafMap[id];fn(ts);};id=_origRAF.call(window,w);_rafIds.push(id);_rafMap[id]=fn;return id;};window.cancelAnimationFrame=function(id){var i=_rafIds.indexOf(id);if(i>=0)_rafIds.splice(i,1);delete _rafMap[id];_origCAF.call(window,id);};}_pp("raf_hook:installed",{frozen:_frozen,hasRAF:!!_origRAF,hasCAF:!!_origCAF});function _parkPendingRafs(){var ids=[];try{ids=_rafIds.slice();_rafIds.length=0;for(var i=0;i<ids.length;i++){if(_rafMap[ids[i]])_frozenRafFns.push(_rafMap[ids[i]]);delete _rafMap[ids[i]];_origCAF.call(window,ids[i]);}}catch(_e3){}}function _endRafDefer(why){if(!_rafDeferred)return;_rafDeferred=false;if(_rafDeferTimer!=null){try{_origCT(_rafDeferTimer);}catch(_ed1){}_rafDeferTimer=null;}if(_rafDeferPoll!=null){try{_origCI(_rafDeferPoll);}catch(_ed2){}_rafDeferPoll=null;}if(_frozen)_parkPendingRafs();try{_pp("raf:defer_end",{why:why,rafSaved:_frozenRafFns.length});}catch(_ed3){}}var _origST=window.setTimeout,_origCT=window.clearTimeout,_origSI=window.setInterval,_origCI=window.clearInterval;var _muteTimer=false;function _timerCall(fn,args,mute){var was=_muteTimer;_muteTimer=!!mute||was;try{if(typeof fn==="function")fn.apply(window,args||[]);else _origST(fn,0);}catch(e){_origST(function(){throw e;},0);}_muteTimer=was;}function _armTimeout(id,delay){var t=_timeouts[id];if(!t)return;t.nativeId=_origST(function(){var cur=_timeouts[id];if(!cur)return;if(_frozen){cur.nativeId=null;cur.due=true;return;}delete _timeouts[id];_timerCall(cur.fn,cur.args,cur.mute);},delay||0);}function _armInterval(id){var it=_intervals[id];if(!it)return;it.nativeId=_origSI(function(){if(_frozen)return;_timerCall(it.fn,it.args);},it.delay||0);}if(_origST&&_origCT){window.setTimeout=function(fn,delay){var id=_timerSeq++,args=Array.prototype.slice.call(arguments,2);_timeouts[id]={fn:fn,args:args,nativeId:null,due:false,mute:_inMute()};_armTimeout(id,delay);return id;};window.clearTimeout=function(id){var t=_timeouts[id];if(t&&t.nativeId!=null)_origCT(t.nativeId);delete _timeouts[id];};}if(_origSI&&_origCI){window.setInterval=function(fn,delay){var id=_timerSeq++,args=Array.prototype.slice.call(arguments,2);_intervals[id]={fn:fn,args:args,delay:delay||0,nativeId:null};_armInterval(id);return id;};window.clearInterval=function(id){var it=_intervals[id];if(it&&it.nativeId!=null)_origCI(it.nativeId);delete _intervals[id];};}var _origMediaPlay=window.HTMLMediaElement&&HTMLMediaElement.prototype.play,_origMediaPause=window.HTMLMediaElement&&HTMLMediaElement.prototype.pause;var _WRm=typeof WeakRef==='function'?WeakRef:null,_mediaKnown=typeof WeakSet==='function'?new WeakSet():null,_mediaSeen=[];function _rememberMedia(el){try{if(!el)return;if(_mediaKnown){if(_mediaKnown.has(el))return;_mediaKnown.add(el);}else if(_mediaSeen.indexOf(el)>=0)return;_mediaSeen.push(_WRm?new _WRm(el):el);}catch(_rm){}}function _allMedia(){var out=[],kept=[];try{var ms=document.querySelectorAll('audio,video');for(var i=0;i<ms.length;i++)out.push(ms[i]);}catch(_q){}for(var j=0;j<_mediaSeen.length;j++){var en=_mediaSeen[j],el=_WRm&&en&&typeof en.deref==='function'?en.deref():en;if(!el)continue;kept.push(en);if(out.indexOf(el)<0)out.push(el);}_mediaSeen=kept;return out;}function _shellPause(el){try{el.__sekaiShellPause=true;el.pause();}catch(_sp){}try{el.__sekaiShellPause=false;}catch(_sq){}}window.addEventListener('play',function(e){var el=e&&e.target;if(!el||!window.HTMLMediaElement||!(el instanceof HTMLMediaElement))return;_rememberMedia(el);if(_docMuted&&!el.muted&&+el.volume>0)_startSilent(el);if(!_frozen||el.__sekaiFadeId)return;try{if(el.__sekaiVol==null)el.__sekaiVol=(typeof el.volume==="number"?el.volume:1);el.volume=0;}catch(_hv){}_shellPause(el);if(_mediaResume.indexOf(el)<0)_mediaResume.push(el);},true);function _heldPlay(el){return new Promise(function(res,rej){(el.__sekaiPlayWaits||(el.__sekaiPlayWaits=[])).push([res,rej]);});}function _settlePlays(el,p,err){var w=el.__sekaiPlayWaits;if(!w)return;el.__sekaiPlayWaits=null;var ok=function(){for(var i=0;i<w.length;i++)w[i][0]();},no=function(er){for(var i=0;i<w.length;i++)w[i][1](er);};if(err)no(err);else if(p&&typeof p.then==="function")p.then(ok,no);else ok();}function _startSilent(el){try{if(el.__sekaiVol==null)el.__sekaiVol=(typeof el.volume==="number"?el.volume:1);el.volume=0;el.__sekaiStartedSilent=1;}catch(_ss){}}function _unsilence(){try{var ms=_allMedia();for(var i=0;i<ms.length;i++){var el=ms[i];if(el&&el.__sekaiStartedSilent&&!el.__sekaiMuteFadeId&&!el.__sekaiMuteHold){el.__sekaiStartedSilent=0;if(!el.paused&&!el.ended)_fadeMediaIn(el);else if(el.__sekaiVol!=null){el.volume=el.__sekaiVol;el.__sekaiVol=null;}}}}catch(_eu){}}if(_origMediaPlay){HTMLMediaElement.prototype.play=function(){_rememberMedia(this);if(_frozen){if(_mediaResume.indexOf(this)<0)_mediaResume.push(this);return _heldPlay(this);}if(_docMuted&&!this.muted&&+this.volume>0)_startSilent(this);return _origMediaPlay.apply(this,arguments);};}function _playAborted(){try{return new DOMException("The play() request was interrupted by a call to pause().","AbortError");}catch(_da){var e=new Error("The play() request was interrupted by a call to pause().");e.name="AbortError";return e;}}function _releaseMedia(el){_mediaRampStop(el);_quietFaded(el);el.__sekaiFreezeHold=false;if(el.__sekaiVol!=null&&!el.__sekaiMuteHold){try{el.volume=el.__sekaiVol;}catch(_rv){}el.__sekaiVol=null;}}if(_origMediaPause){HTMLMediaElement.prototype.pause=function(){var _rel=false;if(!this.__sekaiShellPause){var _ri=_mediaResume.indexOf(this);if(_ri>=0)_mediaResume.splice(_ri,1);_rel=_ri>=0||!!this.__sekaiFadeId;if(this.__sekaiPlayWaits)_settlePlays(this,null,_playAborted());}var _pr=_origMediaPause.apply(this,arguments);if(_rel)_releaseMedia(this);return _pr;};}var _audioCtxs=[];var _docMuted=false;var _unmuteEvent=null;function _inUnmute(){try{return !!_unmuteEvent&&window.event===_unmuteEvent;}catch(_){return false;}}var _muteEvent=null;function _inMute(){try{return !!_muteEvent&&window.event===_muteEvent;}catch(_){return false;}}function _saMuteWork(){return _muteTimer||_inMute();}function _saFrozenNow(c){try{return !!(_frozen);}catch(_){return false;}}function _saMutedNow(c){if(c.__sekaiMuted)return true;try{return !!(_docMuted);}catch(_){return false;}}function _saSilent(c){return _saMutedNow(c)||_saFrozenNow(c);}function _saMayStop(c){return _saFrozenNow(c)||!!c.__sekaiOtherSuspended||(_saMutedNow(c)&&!c.__sekaiRunMuted);}function _saStage(c){return c['__sekaiLifecycleGain'];}function _saDown(c){var g=_saStage(c);return !!(g&&g.__sekaiDown);}function _saGain(c,v,now){var g=_saStage(c);if(!g||!g.gain)return false;g.__sekaiFadeAt=c.currentTime;g.__sekaiDown=v===0;try{g.gain.cancelScheduledValues(c.currentTime);if(now&&g.gain.setValueAtTime)g.gain.setValueAtTime(v,c.currentTime);else g.gain.setTargetAtTime(v,c.currentTime,0.015);}catch(_){}return true;}function _saCall(c,m){c.__sekaiShellCall=true;try{var p=c[m]();if(p&&p.catch)p.catch(function(){});}catch(_){}c.__sekaiShellCall=false;}function _saSuspend(c){_saCall(c,'suspend');}function _saLater(c,ms){var g=_saStage(c);if(!g||g.__sekaiLater)return;g.__sekaiLater=true;_origST(function(){g.__sekaiLater=false;if(c.state!=='running'||!_saDown(c))return;if(!_saMayStop(c))return;var left=1000-(c.currentTime-g.__sekaiFadeAt)*1000;if(left>1){_saLater(c,left);return;}_saSuspend(c);},ms);}function _saQuiet(c){if(!_saGain(c,0)){_saSuspend(c);return;}_saLater(c,1000);}function _saSound(c){if(c.__sekaiSuspending)return;_saGain(c,1);if(c.__sekaiOtherSuspended)return;_saCall(c,'resume');}function _saMute(c){c.__sekaiRunMuted=false;_saQuiet(c);}function _saRunSilent(c){if(!_saDown(c))_saGain(c,0);if(c.state!=='running'&&!c.__sekaiSuspending)_saCall(c,'resume');}function _saWake(c){if(!_saSilent(c)){_saSound(c);return;}if(_saFrozenNow(c)||c.__sekaiOtherSuspended)return;if(c.__sekaiHeldResume){c.__sekaiHeldResume=false;c.__sekaiRunMuted=true;}if(c.__sekaiRunMuted)_saRunSilent(c);}function _saAfter(c,retry){var r=c.state==='running';if(_saFrozenNow(c)||c.__sekaiOtherSuspended){if(r)_saQuiet(c);}else if(_saMutedNow(c)){if(r){if(c.__sekaiRunMuted){if(!_saDown(c))_saGain(c,0);}else _saQuiet(c);}else if(c.__sekaiRunMuted&&retry&&c.state!=='closed')_saRunSilent(c);}else if(c.state!=='closed'&&((!r&&retry)||_saDown(c)))_saSound(c);}function _saWatch(c){var held=[],fr=c.resume;function _saRelease(){if(c.state!=='running'||_saFrozenNow(c)||c.__sekaiOtherSuspended||c.__sekaiSuspending||(!_saMutedNow(c)&&_saDown(c)))return;c.__sekaiHeldResume=false;var h=held.splice(0);for(var i=0;i<h.length;i++)h[i].res();}function _saClosed(){var h=held.splice(0);for(var i=0;i<h.length;i++)(function(x){try{Promise.resolve(fr.apply(c)).then(x.res,x.rej);}catch(e){x.rej(e);}})(h[i]);}['resume','suspend','close'].forEach(function(m){var f=c[m];if(typeof f!=='function')return;c[m]=function(){var shell=!!c.__sekaiShellCall;if(m==='suspend'&&!shell&&_saMuteWork()){if(_docMuted)_saQuiet(c);return Promise.resolve();}if(m==='resume'&&!shell&&_inUnmute()&&(c.__sekaiOtherSuspended||_saFrozenNow(c)))return Promise.resolve();if(m!=='close'){if(!shell){if(m==='suspend'){if(!_saMuteWork())c.__sekaiOtherSuspended=true;c.__sekaiHeldResume=false;}else c.__sekaiOtherSuspended=false;if(m==='resume'){if(_saFrozenNow(c))c.__sekaiHeldResume=true;else c.__sekaiRunMuted=true;}}else if(m==='suspend'&&c.state==='running')c.__sekaiSuspending=true;if(m==='resume'&&!_saSilent(c)&&!c.__sekaiSuspending&&_saDown(c))_saGain(c,1);}if(m==='resume'&&!shell&&c.state!=='closed'&&_saFrozenNow(c))return new Promise(function(res,rej){held.push({res:res,rej:rej});});var p=f.apply(c,arguments);try{if(p&&p.then)p.then(function(){if(m==='close'){_saClosed();return;}if(m==='suspend')c.__sekaiSuspending=false;_saAfter(c,!(shell&&m==='resume'));_saRelease();},function(){if(m==='suspend')c.__sekaiSuspending=false;});}catch(_){}return p;};});}window.addEventListener('message',function(e){var d=e&&e.data;if(typeof d==='string'){try{d=JSON.parse(d);}catch(_j){return;}}if(!d)return;if(d.type==='receive_audio_mute'){if(_docMuted)return;_docMuted=true;_muteEvent=e;try{for(var q=0;q<_audioCtxs.length;q++){if(_audioCtxs[q])_saMute(_audioCtxs[q]);}}catch(_eq){}}else if(d.type==='receive_audio_unmute'){if(!_docMuted)return;_docMuted=false;if(!_frozen){_unsilence();_replayMedia();}_unmuteEvent=e;try{for(var u=0;u<_audioCtxs.length;u++){var cu=_audioCtxs[u];if(cu&&!_saSilent(cu))_saSound(cu);}}catch(_eu){}}});function _mediaRampStop(el){if(el.__sekaiFadeId){_origCI(el.__sekaiFadeId);el.__sekaiFadeId=null;if(el.__sekaiFadeIdDown){el.__sekaiFadeIdDown=false;el.__sekaiFadingOut=Math.max(0,(el.__sekaiFadingOut||0)-1);}}}function _mediaRamp(el,to,done){_mediaRampStop(el);var v=+el.volume;if(v!==v)v=1;var lvl=Math.max(v,to,el.__sekaiVol!=null?+el.__sekaiVol:0),step=lvl/21,n=0,goesDown=to<v;if(!(step>0)){try{el.volume=to;}catch(_z){}if(done)done();return;}if(goesDown){el.__sekaiFadeIdDown=true;el.__sekaiFadingOut=(el.__sekaiFadingOut||0)+1;}el.__sekaiFadeId=_origSI(function(){if(!goesDown&&el.__sekaiFadingOut>0)return;n++;var cur=+el.volume;if(cur!==cur)cur=v;var next=to<cur?Math.max(to,cur-step):Math.min(to,cur+step);if(Math.abs(next-to)<1e-9||n>=42)next=to;try{el.volume=next;}catch(_a){}if(next===to){_mediaRampStop(el);if(done)done();}},4);}function _fadeMediaOut(el){try{if(el.__sekaiVol==null)el.__sekaiVol=(typeof el.volume==="number"?el.volume:1);el.__sekaiFreezeHold=true;_quietFade(el);_mediaRamp(el,0,function(){_shellPause(el);_quietFaded(el);});}catch(_c){_shellPause(el);_quietFaded(el);}}function _fadeMediaIn(el){var target=(el.__sekaiVol!=null?el.__sekaiVol:1);try{if(el.paused)el.volume=0;_mediaRamp(el,target,function(){el.__sekaiFreezeHold=false;if(!el.__sekaiMuteHold)el.__sekaiVol=null;});}catch(_c){try{el.volume=target;}catch(_d){}}}function _replayMedia(){try{var rs=_mediaResume.slice();_mediaResume.length=0;for(var r=0;r<rs.length;r++){(function(el){if(!el)return;var _p=null;if(el.paused){try{el.volume=0;}catch(_v){}_p=el.play();if(_p&&_p.catch)_p.catch(function(){});}_settlePlays(el,_p);_fadeMediaIn(el);})(rs[r]);}}catch(_e12){}}var _OrigAC=window.AudioContext||window.webkitAudioContext;if(_OrigAC){function _NewAC(opts){var c=arguments.length?new _OrigAC(opts):new _OrigAC();try{var _g=c.createGain();_g.connect(c.destination);Object.defineProperty(c,'destination',{get:function(){return _g;},configurable:true});c.__sekaiLifecycleGain=_g;}catch(_eg){}_audioCtxs.push(c);_saWatch(c);if(_saSilent(c)){_saGain(c,0,true);_saSuspend(c);}return c;}_NewAC.prototype=_OrigAC.prototype;try{window.AudioContext=_NewAC;}catch(_e1){}try{if(window.webkitAudioContext)window.webkitAudioContext=_NewAC;}catch(_e2){}}function _onLifecycle(e){if(!e||!e.data)return;var t=e.data.type;if(t==='sekai:freeze'){var f=e.data.data&&typeof e.data.data==='object'&&!Array.isArray(e.data.data)?Object.assign(Object.create(null),e.data,e.data.data):e.data;var _td=f.teardown===true;if(_frozen){if(_td)_quietArm();return;}_frozen=true;window.__sekaiRuntimeFrozen=true;if(!_rafDeferUsed&&!window.__sekaiVisualReady){_rafDeferred=true;_rafDeferUsed=true;try{_rafDeferPoll=_origSI(function(){if(window.__sekaiVisualReady)_endRafDefer('posted');},50);}catch(_ed4){}try{_rafDeferTimer=_origST(function(){_rafDeferTimer=null;_endRafDefer('bound');},6000);}catch(_ed5){}try{_pp("raf:defer_start",{boundMs:6000,rs:document.readyState});}catch(_ed6){}}else{_parkPendingRafs();}var timeoutPaused=0;try{for(var tid in _timeouts){var tt=_timeouts[tid];if(tt&&tt.nativeId!=null){_origCT(tt.nativeId);tt.nativeId=null;tt.due=true;timeoutPaused++;}}}catch(_e4){}var intervalPaused=0;try{for(var iid in _intervals){var ii=_intervals[iid];if(ii&&ii.nativeId!=null){_origCI(ii.nativeId);ii.nativeId=null;intervalPaused++;}}}catch(_e5){}var mediaPaused=0;try{_mediaResume=[];var ms=_allMedia();for(var m=0;m<ms.length;m++){var el=ms[m];if(el&&!el.paused&&!el.ended){if(_mediaResume.indexOf(el)<0)_mediaResume.push(el);mediaPaused++;_fadeMediaOut(el);}}}catch(_e6){}try{for(var j=0;j<_audioCtxs.length;j++){if(_audioCtxs[j])_saQuiet(_audioCtxs[j]);}}catch(_e7){}if(_td)_quietArm();try{if(typeof window.__sekaiOnFreeze==='function')window.__sekaiOnFreeze();}catch(_e8){}try{(typeof pp==="function"?pp:_pp)("raf:freeze_done",{rafSaved:_frozenRafFns.length});}catch(_eflog){}}else if(t==='sekai:thaw'){if(!_frozen)return;_frozen=false;window.__sekaiRuntimeFrozen=false;_endRafDefer('thaw');var _thawRafCnt=_frozenRafFns.length;try{var _thawRafFns=_frozenRafFns.splice(0);for(var _ri=0;_ri<_thawRafFns.length;_ri++)window.requestAnimationFrame(_thawRafFns[_ri]);}catch(_eRaf){}try{_pp("raf:thaw_done",{restored:_thawRafCnt});}catch(_etlog){}var timeoutResumed=0;try{for(var tid2 in _timeouts){var tt2=_timeouts[tid2];if(tt2&&tt2.nativeId==null){tt2.due=false;_armTimeout(tid2,0);timeoutResumed++;}}}catch(_e9){}var intervalResumed=0;try{for(var iid2 in _intervals){var ii2=_intervals[iid2];if(ii2&&ii2.nativeId==null){_armInterval(iid2);intervalResumed++;}}}catch(_e10){}try{for(var k=0;k<_audioCtxs.length;k++){var c2=_audioCtxs[k];if(c2)_saWake(c2);}}catch(_e11){}if(!_docMuted)_replayMedia();else{try{for(var _pw=0;_pw<_mediaResume.length;_pw++)_settlePlays(_mediaResume[_pw],null);}catch(_epw){}}try{if(typeof window.__sekaiOnThaw==='function')window.__sekaiOnThaw();}catch(_e13){}}}window.addEventListener('message',_onLifecycle);}catch(_e){}})();</script><script data-sekai-camera-bridge="1">(function(){if(window.__sekai_camera_bridge_v2)return;window.__sekai_camera_bridge_v2=true;var pending={};var seq=0;function nextId(){seq+=1;return 'cam-'+seq+'-'+Date.now();}function cloneConstraints(c){try{return JSON.parse(JSON.stringify(c||{video:true}));}catch(_e){return {video:true};}}function fail(name,message){if(typeof DOMException==='function')return new DOMException(message,name);var e=new Error(message);e.name=name;return e;}function isOriginFailure(err){var n=err&&err.name;return n==='SecurityError'||n==='NotSupportedError'||n==='TypeError';}var nativeMd=navigator.mediaDevices;var nativeGum=nativeMd&&typeof nativeMd.getUserMedia==='function'?nativeMd.getUserMedia.bind(nativeMd):null;var legacyGum=navigator.getUserMedia||navigator.webkitGetUserMedia||navigator.mozGetUserMedia;function callNative(constraints){if(nativeGum)return nativeGum(constraints);if(typeof legacyGum==='function')return new Promise(function(resolve,reject){legacyGum.call(navigator,constraints,resolve,reject);});return Promise.reject(fail('NotSupportedError','getUserMedia missing'));}function requestParent(constraints){return new Promise(function(resolve,reject){var requestId=nextId();pending[requestId]={resolve:resolve,reject:reject};try{window.parent.postMessage({type:'sekai:camera_request',data:{requestId:requestId,constraints:cloneConstraints(constraints)}},'*');}catch(err){delete pending[requestId];reject(err);}});}function attachLocalStream(requestId){var canvas=document.createElement('canvas');canvas.width=640;canvas.height=480;var ctx=canvas.getContext('2d');if(!ctx||typeof canvas.captureStream!=='function')throw fail('NotSupportedError','captureStream missing');var localStream=canvas.captureStream(15);var videoTrack=localStream.getVideoTracks()[0];var stopped=false;function stopAll(){if(stopped)return;stopped=true;try{window.parent.postMessage({type:'sekai:camera_stop',data:{requestId:requestId}},'*');}catch(_e){}}if(videoTrack){var nativeStop=videoTrack.stop.bind(videoTrack);videoTrack.stop=function(){stopAll();nativeStop();};}var slot=pending[requestId];if(slot){slot.canvas=canvas;slot.ctx=ctx;slot.img=new Image();slot.onstop=stopAll;}return localStream;}function drawFrame(requestId,data){var slot=pending[requestId];if(!slot||!slot.ctx)return;var canvas=slot.canvas;var ctx=slot.ctx;if(data.bitmap){try{if(data.bitmap.width)canvas.width=data.bitmap.width;if(data.bitmap.height)canvas.height=data.bitmap.height;ctx.drawImage(data.bitmap,0,0);if(data.bitmap.close)data.bitmap.close();}catch(_e){}return;}if(data.jpeg){var img=slot.img||new Image();slot.img=img;img.onload=function(){try{canvas.width=img.naturalWidth||img.width;canvas.height=img.naturalHeight||img.height;ctx.drawImage(img,0,0);}catch(_e2){}};img.src=data.jpeg;}}window.addEventListener('message',function(event){var data=event.data;if(!data||typeof data!=='object')return;if(data.type!=='sekai:camera_response'&&data.type!=='sekai:camera_frame')return;if(data.data&&typeof data.data==='object'&&!Array.isArray(data.data))data=Object.assign(Object.create(null),data,data.data,{type:data.type});if(data.type==='sekai:camera_response'){var slot=pending[data.requestId];if(!slot)return;if(!data.ok){delete pending[data.requestId];slot.reject(fail(data.name||'NotAllowedError',data.message||'camera failed'));return;}try{slot.resolve(attachLocalStream(data.requestId));}catch(err){delete pending[data.requestId];slot.reject(err);}return;}if(data.type==='sekai:camera_frame')drawFrame(data.requestId,data);});function wrapGum(constraints){return callNative(constraints).catch(function(err){if(isOriginFailure(err))return requestParent(constraints);throw err;});}function report(capability,result,reason){try{window.parent.postMessage({type:'sekai_capability_used',data:{capability:capability,result:result,reason:reason?String(reason).slice(0,64):null}},'*');}catch(_e){}}function outcome(err){var n=err&&err.name;if(n==='NotAllowedError'||n==='PermissionDeniedError')return 'denied';if(n==='NotSupportedError'||n==='NotFoundError'||n==='OverconstrainedError')return 'unsupported';return 'error';}function errName(err){return err&&err.name?err.name:'Error';}function kinds(c){var k=[];if(!c||c.video)k.push('camera');if(c&&c.audio)k.push('microphone');return k;}function track(constraints,p){var k=kinds(constraints);return p.then(function(s){for(var i=0;i<k.length;i++)report(k[i],'ok',null);return s;},function(err){for(var i=0;i<k.length;i++)report(k[i],outcome(err),errName(err));throw err;});}if(!navigator.mediaDevices){try{navigator.mediaDevices={};}catch(_e){}}var liveTracks=[],liveCamera=false,liveMicrophone=false;function postLive(){var cam=false,mic=false;for(var i=0;i<liveTracks.length;i++){if(liveTracks[i].kind==='video')cam=true;else if(liveTracks[i].kind==='audio')mic=true;}if(cam===liveCamera&&mic===liveMicrophone)return;liveCamera=cam;liveMicrophone=mic;try{window.parent.postMessage({type:'sekai:media_live',data:{camera:cam,microphone:mic}},'*');}catch(_e){}}function dropTrack(t){var i=liveTracks.indexOf(t);if(i===-1)return;liveTracks.splice(i,1);postLive();}function keepTrack(t){if(!t||t.readyState==='ended'||liveTracks.indexOf(t)!==-1)return;liveTracks.push(t);if(typeof t.addEventListener==='function')t.addEventListener('ended',function(){dropTrack(t);});if(typeof t.stop==='function'){var stop=t.stop;t.stop=function(){try{return stop.apply(t,arguments);}finally{dropTrack(t);}};}}function watchStream(s){try{var ts=s&&typeof s.getTracks==='function'?s.getTracks():[];for(var i=0;i<ts.length;i++)keepTrack(ts[i]);postLive();}catch(_e){}return s;}var mediaBlocked=false;window.addEventListener('message',function(event){var d=event.data;if(event.source!==window.parent||!d||typeof d!=='object'||d.type!=='sekai:embed_media_gate')return;var f=d.data&&typeof d.data==='object'&&typeof d.data.blocked==='boolean'?d.data:d;mediaBlocked=f.blocked===true;});if(navigator.mediaDevices){navigator.mediaDevices.getUserMedia=function(constraints){if(mediaBlocked)return track(constraints,Promise.reject(fail('NotAllowedError','camera and microphone are in use by the outer Sekai')));return track(constraints,(nativeGum?wrapGum(constraints):requestParent(constraints)).then(watchStream));};}function watch(target,names,capability){if(!target)return;for(var i=0;i<names.length;i++){(function(name){var orig=target[name];if(typeof orig!=='function')return;target[name]=function(){var r;try{r=orig.apply(this,arguments);}catch(err){report(capability,outcome(err),errName(err));throw err;}if(r&&typeof r.then==='function')return r.then(function(v){report(capability,'ok',null);return v;},function(err){report(capability,outcome(err),errName(err));throw err;});report(capability,'requested',null);return r;};})(names[i]);}}watch(typeof Element!=='undefined'&&Element.prototype,['requestFullscreen','webkitRequestFullscreen'],'fullscreen');watch(typeof Document!=='undefined'&&Document.prototype,['exitFullscreen','webkitExitFullscreen'],'fullscreen_exit');})();</script><script data-sekai-local-click-compat="1">(function(){if(window.__sekai_local_click_compat_installed)return;window.__sekai_local_click_compat_installed=true;var TAP_SLOP=12;var DEDUPE_MS=600;var down=null;var lastCompatFire=null;function isPrimaryButton(e){return e.button===undefined||e.button===0;}function reset(pointerId){if(!down)return;if(pointerId!==undefined&&down.pointerId!==undefined&&pointerId!==down.pointerId)return;down=null;}function isTap(e){if(!down)return false;var dx=Math.abs((e.clientX||0)-down.x);var dy=Math.abs((e.clientY||0)-down.y);return dx<=TAP_SLOP&&dy<=TAP_SLOP;}function onclickInPath(node){while(node&&node!==document&&node!==window){if(typeof node.onclick==='function')return node;node=node.parentElement;}return null;}function buildCompatEvent(e){try{return new MouseEvent('click',{bubbles:true,cancelable:true,view:e.view||window,detail:1,screenX:e.screenX||0,screenY:e.screenY||0,clientX:e.clientX||0,clientY:e.clientY||0,ctrlKey:!!e.ctrlKey,altKey:!!e.altKey,shiftKey:!!e.shiftKey,metaKey:!!e.metaKey,button:0,relatedTarget:null});}catch(_){return e;}}function callOnclickPath(node,e){var fired=0;while(node&&node!==document&&node!==window){if(typeof node.onclick==='function'){try{var r=node.onclick.call(node,e);fired++;if(r===false&&e&&e.preventDefault)e.preventDefault();}catch(_err){}if(e&&e.cancelBubble)break;}node=node.parentElement;}return fired;}window.addEventListener('pointerdown',function(e){if(!isPrimaryButton(e))return;down={x:e.clientX||0,y:e.clientY||0,pointerId:e.pointerId,target:e.target};},true);window.addEventListener('pointercancel',function(e){reset(e.pointerId);},true);window.addEventListener('pointerup',function(e){if(!isPrimaryButton(e)||!down)return;if(down.pointerId!==undefined&&e.pointerId!==undefined&&down.pointerId!==e.pointerId)return;var target=e.target&&e.target.nodeType===1?e.target:down.target;var tap=isTap(e);var root=target?onclickInPath(target):null;down=null;if(!target||!tap||!root)return;var compatEvent=buildCompatEvent(e);setTimeout(function(){var fired=callOnclickPath(target,compatEvent);if(fired>0){lastCompatFire={root:root,t:Date.now()};}},0);},true);window.addEventListener('click',function(e){if(!lastCompatFire)return;if(Date.now()-lastCompatFire.t>DEDUPE_MS){lastCompatFire=null;return;}var n=e.target;while(n&&n!==document&&n!==window){if(n===lastCompatFire.root){lastCompatFire=null;e.stopImmediatePropagation();return;}n=n.parentElement;}},true);})();</script><!-- sekai:online-scripts --><script>(function(){if(window.__sekai_vibration_governor_installed)return;window.__sekai_vibration_governor_installed=true;var MAX_DURATION_MS=60;var gateOpen=true;var originalVibrate=typeof navigator!=="undefined"&&navigator.vibrate?navigator.vibrate.bind(navigator):null;function clampValue(value){var num=Number(value);if(!isFinite(num)||num<=0)return 0;return Math.min(Math.round(num),MAX_DURATION_MS);}function extractDuration(pattern){if(Array.isArray(pattern)){var maxDuration=0;for(var i=0;i<pattern.length;i++){maxDuration=Math.max(maxDuration,clampValue(pattern[i]));}return maxDuration;}return clampValue(pattern);}function stopOnly(){if(originalVibrate){try{originalVibrate(0);}catch(_){}}}function forward(pattern){if(!gateOpen)return false;var duration=extractDuration(pattern);if(duration<=0)return false;try{window.parent.postMessage({action:"gen_vibration",data:{type:"light",duration:duration,source:"navigator_vibrate"}},"*");return true;}catch(_){return false;}}function closeGate(){gateOpen=false;stopOnly();}function openGate(){gateOpen=true;}if(originalVibrate){navigator.vibrate=function(pattern){if(pattern===0)return stopOnly(),true;if(Array.isArray(pattern)){var hasPositive=false;for(var i=0;i<pattern.length;i++){if(clampValue(pattern[i])>0){hasPositive=true;break;}}if(!hasPositive)return stopOnly(),true;}return forward(pattern);};}window.__sekaiVibrationGovernor={stop:closeGate,resume:openGate,forward:forward};document.addEventListener("visibilitychange",function(){if(document.visibilityState==="hidden")closeGate();});window.addEventListener("message",function(ev){var data=ev.data;if(typeof data==="string"){try{data=JSON.parse(data);}catch(_){return;}}if(!data)return;if(data.type==="sekai:cancel_vibration")closeGate();if(data.type==="sekai:resume_vibration")openGate();});})();(function(){function e(){var m=document.querySelector('meta[name="viewport"]');if(!m){m=document.createElement('meta');m.name='viewport';document.head.insertBefore(m,document.head.firstChild)}m.content='width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no'}document.readyState==='loading'?document.addEventListener('DOMContentLoaded',e):e();})();(function(){var oA=EventTarget.prototype.addEventListener,oR=EventTarget.prototype.removeEventListener,wm=new WeakMap();
+          // A mapped pointerup can replace the DOM before the browser sends click.
+          // Keep iOS activation, but consume that touch's click before it hits the new UI.
+          var pendingClick = null;
+          oA.call(document, 'pointerdown', function(){ pendingClick = null; }, true);
+          oA.call(document, 'pointercancel', function(){ pendingClick = null; }, true);
+          oA.call(document, 'click', function(e){
+            // Scripted .click() and keyboard/accessibility activation are independent.
+            if (!pendingClick || !e.isTrusted || e.detail === 0) return;
+            var pending = pendingClick;
+            pendingClick = null;
+            // Modern click is a PointerEvent; older WebViews expose a MouseEvent.
+            // Preserve native defaults and inline onclick on the original target.
+            // Only a click retargeted to different UI can be this menu click-through.
+            if (e.target === pending.target) return;
+            var samePointer = typeof e.pointerId === 'number' && e.pointerId > 0
+              ? e.pointerId === pending.id
+              : Math.abs(e.clientX - pending.x) < 16 && Math.abs(e.clientY - pending.y) < 16;
+            // This is a one-gesture expiry, not a global click debounce. A new down clears it.
+            if (samePointer && performance.now() - pending.time < 700) {
+              e.preventDefault();
+              e.stopImmediatePropagation();
+            }
+          }, true);
+          EventTarget.prototype.addEventListener=function(t,fn,o){if(t==='click'&&typeof fn==='function'){var m=wm.get(this);if(!m){m=new Map();wm.set(this,m)}var ex=m.get(fn);if(ex)return oA.call(this,'pointerup',ex,o);var w=function(e){if(e.button!==0)return;if(e.isTrusted&&e.pointerType==='touch')pendingClick={id:e.pointerId,x:e.clientX,y:e.clientY,time:performance.now(),target:e.target};try{fn.call(this,e)}catch(_){}};m.set(fn,w);return oA.call(this,'pointerup',w,o)}return oA.call(this,t,fn,o)};EventTarget.prototype.removeEventListener=function(t,fn,o){if(t==='click'&&typeof fn==='function'){var m=wm.get(this);if(m){var w=m.get(fn);if(w){m.delete(fn);return oR.call(this,'pointerup',w,o)}}}return oR.call(this,t,fn,o)}})();(function(){var lt=0;document.addEventListener('touchstart',function(){lt=Date.now()},{passive:true,capture:true});document.addEventListener('touchend',function(){lt=Date.now()},{passive:true,capture:true});document.addEventListener('mousedown',function(e){if(Date.now()-lt<200){var t=e.target;if(t.tagName==='INPUT'||t.tagName==='TEXTAREA'||t.tagName==='SELECT'||t.isContentEditable)return;e.stopPropagation();e.preventDefault()}},{capture:true});var oA=EventTarget.prototype.addEventListener;EventTarget.prototype.addEventListener=function(t,fn,o){if(t==='touchstart'||t==='touchmove')return oA.call(this,t,fn,Object.assign({},o||{},{passive:true}));return oA.call(this,t,fn,o)}})();(function(){function s(msg){if(msg===null||msg===undefined)return '';if(typeof msg==='string')return msg;if(typeof msg==='object'){try{return JSON.stringify(msg);}catch(_e){return String(msg);}}return String(msg);}window.onerror=function(message,source,lineno,colno,error){var m=s(message);if(m.indexOf('Unable to preventDefault inside passive event listener')!==-1)return true;var fields={message:m,source:source||'',lineno:lineno||0,colno:colno||0,errorName:error?error.name:'',errorStack:error?error.stack:''};window.parent.postMessage(Object.assign({type:'sekai_iframe_js_error'},fields,{data:fields}),'*');return false;};window.addEventListener('unhandledrejection',function(event){var reason=event.reason;var isError=reason instanceof Error;var m=reason?s(reason):'Unhandled promise rejection';if(m.indexOf('Unable to preventDefault inside passive event listener')!==-1)return;var fields={message:m,source:'unhandledrejection',lineno:0,colno:0,errorName:isError?reason.name:'',errorStack:isError?reason.stack:''};window.parent.postMessage(Object.assign({type:'sekai_iframe_js_error'},fields,{data:fields}),'*');});})();(function(){var isMuted=false,mutedEls=new WeakMap(),pendingResume=[],intendedPlaying=null,ctxs=[];function _saFrozenNow(c){try{return !!(window.__sekaiIsRuntimeFrozen&&window.__sekaiIsRuntimeFrozen());}catch(_){return false;}}function _saMutedNow(c){if(c.__sekaiMuted)return true;try{return !!(false);}catch(_){return false;}}function _saSilent(c){return _saMutedNow(c)||_saFrozenNow(c);}function _saMayStop(c){return _saFrozenNow(c)||!!c.__sekaiOtherSuspended||(_saMutedNow(c)&&!c.__sekaiRunMuted);}function _saStage(c){return c['__sekaiMasterGain'];}function _saDown(c){var g=_saStage(c);return !!(g&&g.__sekaiDown);}function _saGain(c,v,now){var g=_saStage(c);if(!g||!g.gain)return false;g.__sekaiFadeAt=c.currentTime;g.__sekaiDown=v===0;try{g.gain.cancelScheduledValues(c.currentTime);if(now&&g.gain.setValueAtTime)g.gain.setValueAtTime(v,c.currentTime);else g.gain.setTargetAtTime(v,c.currentTime,0.015);}catch(_){}return true;}function _saCall(c,m){c.__sekaiShellCall=true;try{var p=c[m]();if(p&&p.catch)p.catch(function(){});}catch(_){}c.__sekaiShellCall=false;}function _saSuspend(c){}function _saLater(c,ms){}function _saQuiet(c){if(!_saGain(c,0)){_saSuspend(c);return;}_saLater(c,1000);}function _saSound(c){_saGain(c,1);if(c.__sekaiOtherSuspended)return;if(_saFrozenNow(c))return;_saCall(c,'resume');}function _saMute(c){c.__sekaiRunMuted=false;_saQuiet(c);}function _saRunSilent(c){if(!_saDown(c))_saGain(c,0);if(c.state!=='running'&&!c.__sekaiSuspending)_saCall(c,'resume');}function _saWake(c){if(!_saSilent(c)){_saSound(c);return;}if(_saFrozenNow(c)||c.__sekaiOtherSuspended)return;if(c.__sekaiHeldResume){c.__sekaiHeldResume=false;c.__sekaiRunMuted=true;}if(c.__sekaiRunMuted)_saRunSilent(c);}var _mResume=new Set();var _WR=typeof WeakRef==='function'?WeakRef:null;function trackWeakly(l,e){l.push(_WR?new _WR(e):e)}function liveElements(l){var live=[],kept=[];for(var i=0;i<l.length;i++){var en=l[i],e=(_WR&&en&&typeof en.deref==='function')?en.deref():en;if(!e)continue;kept.push(en);live.push(e)}l.length=0;for(var k=0;k<kept.length;k++)l.push(kept[k]);return live}var _iSet=typeof WeakSet==='function'?new WeakSet():null,_iRefs=[];intendedPlaying={add:function(e){if(!e)return;if(_iSet){if(_iSet.has(e))return;_iSet.add(e)}else if(_iRefs.indexOf(e)!==-1)return;trackWeakly(_iRefs,e)},delete:function(e){if(_iSet&&e)_iSet.delete(e)},forEach:function(f){var l=liveElements(_iRefs);for(var i=0;i<l.length;i++)if(!_iSet||_iSet.has(l[i]))f(l[i])}};function _shellPause(el){try{el.__sekaiShellPause=true;el.pause();}catch(_a){}try{el.__sekaiShellPause=false;}catch(_b){}}function _letGo(el){el.__sekaiMuteHold=false;if(!el.__sekaiFreezeHold)el.__sekaiVol=null;}function _release(el){_clrFade(el);el.__sekaiMuteHold=false;if(el.__sekaiVol!=null&&!el.__sekaiFreezeHold){try{el.volume=el.__sekaiVol;}catch(_a){}el.__sekaiVol=null;}if(isMuted){try{el.muted=true;}catch(_b){}}}function _muteRampStop(el){if(el.__sekaiMuteFadeId){clearInterval(el.__sekaiMuteFadeId);el.__sekaiMuteFadeId=null;if(el.__sekaiMuteFadeIdDown){el.__sekaiMuteFadeIdDown=false;el.__sekaiFadingOut=Math.max(0,(el.__sekaiFadingOut||0)-1);}}}function _muteRamp(el,to,done){_muteRampStop(el);var v=+el.volume;if(v!==v)v=1;var lvl=Math.max(v,to,el.__sekaiVol!=null?+el.__sekaiVol:0),step=lvl/21,n=0,goesDown=to<v;if(!(step>0)){try{el.volume=to;}catch(_z){}if(done)done();return;}if(goesDown){el.__sekaiMuteFadeIdDown=true;el.__sekaiFadingOut=(el.__sekaiFadingOut||0)+1;}el.__sekaiMuteFadeId=setInterval(function(){if(!goesDown&&el.__sekaiFadingOut>0)return;n++;var cur=+el.volume;if(cur!==cur)cur=v;var next=to<cur?Math.max(to,cur-step):Math.min(to,cur+step);if(Math.abs(next-to)<1e-9||n>=42)next=to;try{el.volume=next;}catch(_a){}if(next===to){_muteRampStop(el);if(done)done();}},4);}function _clrFade(el){_muteRampStop(el);}function _fadeOut(el){try{var v0=+el.volume;if(v0!==v0)v0=1;if(el.__sekaiVol==null)el.__sekaiVol=v0;el.__sekaiMuteHold=true;_muteRamp(el,0,function(){_shellPause(el);try{el.muted=true;}catch(_c){}try{el.volume=v0;}catch(_d){}});}catch(_e){_shellPause(el);try{el.muted=true;}catch(_g){}}}function _fadeIn(el){var tg=(el.__sekaiVol!=null?el.__sekaiVol:1);try{el.volume=0;_muteRamp(el,tg,function(){_letGo(el);});}catch(_c){try{el.volume=tg;}catch(_d){}}}function _holdMuted(e){try{if(!mutedEls.has(e))mutedEls.set(e,e.muted);e.muted=true;}catch(_h){}}function _mEl(e){try{if(!mutedEls.has(e))mutedEls.set(e,e.muted);if(!e.paused&&!e.ended&&!e.muted){_mResume.add(e);_fadeOut(e);}else{try{e.muted=true;}catch(_a){}}}catch(_b){}}function _uEl(e){try{_clrFade(e);var w=mutedEls.get(e),wm=w!==undefined?w:false,heard=!e.paused&&!e.ended,fr=false;try{fr=!!(window.__sekaiIsRuntimeFrozen&&window.__sekaiIsRuntimeFrozen());}catch(_f){}if(heard&&!e.muted){if(e.__sekaiVol!=null&&!fr)_muteRamp(e,e.__sekaiVol,function(){_letGo(e);});else e.__sekaiMuteHold=false;}else if(heard&&e.muted&&!wm&&!fr){var lvl=e.__sekaiVol!=null?+e.__sekaiVol:+e.volume;if(lvl!==lvl)lvl=1;if(e.__sekaiVol==null)e.__sekaiVol=lvl;e.__sekaiMuteHold=true;try{e.volume=0;}catch(_z){}e.muted=false;_muteRamp(e,e.__sekaiVol,function(){_letGo(e);});return;}else if(e.__sekaiVol!=null){try{e.volume=e.__sekaiVol;}catch(_a){}}e.muted=wm;}catch(_b){}}var oAC=window.AudioContext||window.webkitAudioContext;if(oAC){var P=function(){var c=new oAC();try{var _g=c.createGain();_g.connect(c.destination);Object.defineProperty(c,'destination',{get:function(){return _g;},configurable:true});c.__sekaiMasterGain=_g;}catch(_eg){}c.__sekaiMuted=isMuted;ctxs.push(c);if(isMuted){_saGain(c,0,true);_saSuspend(c);}return c};P.prototype=oAC.prototype;window.AudioContext=P;if(window.webkitAudioContext)window.webkitAudioContext=P}var aEls=[],oAudio=window.Audio,_VPU=6,_vp=Object.create(null),_lm=typeof WeakSet==='function'?new WeakSet():null;function _untouched(v,u){try{if(v.volume!==1||v.loop||v.muted||v.playbackRate!==1)return false;if(_lm&&_lm.has(v))return false;if(v.getAttribute('src')!==u)return false;return true}catch(_){return false}}function _rw(v){try{v.currentTime=0}catch(_){}return v}function _recycled(u){if(typeof u!=='string'||!u)return null;var p=_vp[u];if(!p){_vp[u]={r:[],at:0};return null}var l=liveElements(p.r);for(var i=0;i<l.length;i++)if(l[i].ended&&_untouched(l[i],u))return _rw(l[i]);if(l.length<_VPU)return null;for(var n=0;n<l.length;n++){var k=(p.at+n)%l.length;if(_untouched(l[k],u)){p.at=(k+1)%l.length;return _rw(l[k])}}return null}function _rememberVoice(u,v){if(typeof u!=='string'||!u)return;var p=_vp[u]||(_vp[u]={r:[],at:0});if(liveElements(p.r).length<_VPU)trackWeakly(p.r,v)}if(oAudio){window.Audio=function(s){var r=_recycled(s);if(r){if(isMuted)_holdMuted(r);return r}var a=new oAudio(s);trackWeakly(aEls,a);_rememberVoice(s,a);if(isMuted)_holdMuted(a);return a};window.Audio.prototype=oAudio.prototype}var vEls=[],oCE=document.createElement;document.createElement=function(tag){var el=oCE.call(document,tag);if(typeof tag==='string'){var t=tag.toLowerCase();if(t==='audio'){trackWeakly(aEls,el);if(isMuted)_holdMuted(el)}else if(t==='video'){trackWeakly(vEls,el);if(isMuted)_holdMuted(el)}}return el};var _oAEL=EventTarget.prototype.addEventListener;if(_lm&&typeof AudioContext!=='undefined'&&AudioContext.prototype&&typeof AudioContext.prototype.createMediaElementSource==='function'){var _cMES=AudioContext.prototype.createMediaElementSource;AudioContext.prototype.createMediaElementSource=function(e){try{if(e)_lm.add(e)}catch(_){}return _cMES.apply(this,arguments)}}if(window.HTMLMediaElement&&_lm){var _mAEL=HTMLMediaElement.prototype.addEventListener;HTMLMediaElement.prototype.addEventListener=function(t,l,o){_lm.add(this);return _mAEL.call(this,t,l,o)}}if(window.HTMLMediaElement){var oP=HTMLMediaElement.prototype.play,oPa=HTMLMediaElement.prototype.pause;HTMLMediaElement.prototype.play=function(){intendedPlaying.add(this);if(!this.__sekaiEndTracked){this.__sekaiEndTracked=true;var _s=this,_f=function(){intendedPlaying.delete(_s);_s.__sekaiEndTracked=false};_oAEL.call(this,'ended',_f,{once:true});_oAEL.call(this,'emptied',_f,{once:true})}if(isMuted&&!mutedEls.has(this)){mutedEls.set(this,this.muted);this.muted=true}return oP.apply(this,arguments)};HTMLMediaElement.prototype.pause=function(){intendedPlaying.delete(this);var _held=false;if(!this.__sekaiShellPause){_held=_mResume.has(this)||!!this.__sekaiMuteFadeId;_mResume.delete(this);if(pendingResume.length){var _q=liveElements(pendingResume);if(_q.indexOf(this)>=0){_held=true;pendingResume=[];for(var _k=0;_k<_q.length;_k++)if(_q[_k]!==this)trackWeakly(pendingResume,_q[_k])}}}var _pr=oPa.apply(this,arguments);if(_held)_release(this);return _pr}}function muteAll(){if(isMuted)return;isMuted=true;pendingResume=[];ctxs.forEach(function(c){if(c){c.__sekaiMuted=true;_saMute(c);}});document.querySelectorAll('audio,video').forEach(_mEl);liveElements(aEls).forEach(_mEl);liveElements(vEls).forEach(_mEl)}function resumeCtx(){ctxs.forEach(function(c){if(c&&!_saMutedNow(c))_saSound(c)})}function unmuteAll(){if(!isMuted)return;isMuted=false;ctxs.forEach(function(c){if(c)c.__sekaiMuted=false});resumeCtx();document.querySelectorAll('audio,video').forEach(_uEl);liveElements(aEls).forEach(_uEl);liveElements(vEls).forEach(_uEl);intendedPlaying.forEach(function(e){trackWeakly(pendingResume,e)});var _pl=liveElements(pendingResume);_mResume.forEach(function(e){if(_pl.indexOf(e)<0){trackWeakly(pendingResume,e);_pl.push(e)}});_mResume.clear();liveElements(pendingResume).forEach(function(e){try{if(e.paused){try{e.volume=0;}catch(_v){}var _p=e.play();if(_p&&_p.catch)_p.catch(function(){});_fadeIn(e);}}catch(_){}})}document.addEventListener('touchstart',function(){if(isMuted)return;resumeCtx();if(!pendingResume.length)return;var t=liveElements(pendingResume);pendingResume=[];t.forEach(function(e){try{if(!e.paused)return;e.play().catch(function(){trackWeakly(pendingResume,e)})}catch(_){trackWeakly(pendingResume,e)}})},{passive:true,capture:true});window.addEventListener('message',function(ev){var d=ev.data;if(typeof d==='string'){try{d=JSON.parse(d)}catch(_){return}}if(!d)return;if(d.type==='receive_audio_mute'||(d.origin==='sekai_gaming_iframe_api'&&d.type==='receive_audio_mute'))muteAll();if(d.type==='receive_audio_unmute'||(d.origin==='sekai_gaming_iframe_api'&&d.type==='receive_audio_unmute'))unmuteAll()});window.addEventListener('DOMContentLoaded',function(){window.parent.postMessage({origin:'sekai_gaming_iframe_api',type:'sekai_iframe_dom_ready'},'*')})})();(function(){var s=document.createElement('style');s.textContent='html,body{overscroll-behavior:contain!important;height:100%!important;-webkit-user-select:none!important;user-select:none!important;touch-action:none!important;}';document.head.appendChild(s);var st=null;function findScr(el){while(el&&el!==document.body&&el!==document.documentElement){var cs=window.getComputedStyle(el);var cy=(cs.overflowY==='auto'||cs.overflowY==='scroll')&&el.scrollHeight>el.clientHeight;var cx=(cs.overflowX==='auto'||cs.overflowX==='scroll')&&el.scrollWidth>el.clientWidth;if(cy||cx){return{el:el,panX:cx,panY:cy}}el=el.parentElement}return null}document.addEventListener('touchstart',function(e){var hit=e.touches.length===1?findScr(e.target):null;st=hit?hit.el:null;if(hit){var ax=[];if(hit.panX)ax.push('pan-x');if(hit.panY)ax.push('pan-y');st.style.touchAction=ax.join(' ')}},{passive:true,capture:true});document.addEventListener('touchend',function(){if(st){st.style.touchAction='';st=null}},{passive:true,capture:true});document.addEventListener('focusin',function(e){var t=e.target;if(t.tagName==='INPUT'||t.tagName==='TEXTAREA'||t.isContentEditable)window.parent.postMessage({type:'iframe-focusin'},'*')},true);document.addEventListener('focusout',function(e){var t=e.target,r=e.relatedTarget;if((t.tagName==='INPUT'||t.tagName==='TEXTAREA'||t.isContentEditable)&&!(r&&(r.tagName==='INPUT'||r.tagName==='TEXTAREA'||r.isContentEditable)))window.parent.postMessage({type:'iframe-focusout'},'*')},true)})();(function(){var vs=document.createElement('style');vs.id='sekai-viewport-style';document.head.appendChild(vs);try{Object.defineProperty(window,'innerHeight',{get:function(){return document.documentElement.clientHeight},configurable:true})}catch(_){}var cur=false;function apply(h){if(h===cur)return;cur=h;if(typeof h==='number'&&h>0){vs.textContent=':root{--sekai-viewport-height:'+h+'px}html{height:'+h+'px!important;overflow:hidden!important}body{height:'+h+'px!important;overflow:hidden!important}#game-container{height:'+h+'px!important}'}else{vs.textContent=':root{--sekai-viewport-height:100%}html{height:100%!important;overflow:hidden!important}body{height:100%!important;overflow:hidden!important}'}}var _dk=(function(){var d=document.documentElement;return d?(d.clientWidth+"x"+d.clientHeight):"";})();window.addEventListener('message',function(e){if(e.data&&e.data.type==='viewport_height_change'){var f=e.data.data&&typeof e.data.data==='object'&&!Array.isArray(e.data.data)?Object.assign(Object.create(null),e.data,e.data.data):e.data;apply(typeof f.height==='number'?f.height:null);var d=document.documentElement;var nk=d?(d.clientWidth+"x"+d.clientHeight):"";if(nk!==_dk){_dk=nk;try{window.dispatchEvent(new Event('resize'))}catch(_){}}}});window.parent.postMessage({type:'viewport_ready'},'*')})();(function(){
+    var policy={"max_requests":2048,"max_contexts":4,"flush_interval_ms":250,"initial_snapshot_delay_ms":400,"initial_details_delay_ms":450,"detail_top_count":5,"detail_name_max_chars":140,"native_batch_max_entries":64,"native_batch_max_bytes":65536,"readiness_timeout_ms":2000,"clock_tolerance_ms":100}, initialContext=null;
+    var initialStats={byType:{},resource_total_count:0,resource_success_count:0,resource_error_count:0,resource_total_size_bytes:0,total_duration_ms:0}, detailSlow=[], detailLarge=[], tailwind=false, detailsDone=false, snapshotDone=false, records=[], contexts=[], active=null, observer=null, timer=null, dynamicInstalled=false;
+    var coverage={performance_observer:false,fetch:typeof window.fetch==='function',xhr:typeof window.XMLHttpRequest==='function',beacon:typeof navigator.sendBeacon==='function',document:false,static_inflight:false,dropped_request_count:0};
+    function clock(){return Date.now();}
+    function tick(){return performance.now();}
+    function type(t){return({script:'script',link:'stylesheet',css:'stylesheet',img:'image',font:'font',audio:'audio',video:'video',fetch:'fetch',xmlhttprequest:'xhr',beacon:'beacon'})[t]||'other';}
+    function url(v){try{return new URL(typeof v==='string'?v:v.url,document.baseURI).href;}catch(_){return '';}}
+    function status(s){return s>=200&&s<400?'success':s>=400?'failed':'unknown';}
+    function number(n){return typeof n==='number'&&isFinite(n)&&n>=0?Math.round(n):0;}
+    function contextKey(c){return String(c.binding_generation)+'#'+c.card_session_id+'#'+c.load_context+'#'+(c.observed_at_ms===undefined?'':String(c.observed_at_ms));}
+    function valid(c){return c&&typeof c.sampled==='boolean'&&Number.isSafeInteger(c.binding_generation)&&c.binding_generation>=0&&typeof c.card_session_id==='string'&&c.card_session_id.length>0&&(c.load_context==='visible'||c.load_context==='preparation')&&(c.observed_at_ms===undefined||(Number.isSafeInteger(c.observed_at_ms)&&c.observed_at_ms>=0));}
+    function send(payload){try{window.parent.postMessage({type:'sekai_iframe_perf_resources',payload:payload,data:payload},'*');}catch(_){}}
+    function legacyFold(e){var t=type(e.initiatorType);if(t==='xhr'||t==='beacon')t='fetch';if(t==='video')t='other';var b=initialStats.byType[t]||(initialStats.byType[t]={total_count:0,success_count:0,error_count:0,total_size_bytes:0,max_size_bytes:0,total_duration_ms:0,max_duration_ms:0}),d=number(e.duration),sz=number(e.transferSize)+number(e.encodedBodySize);b.total_count++;initialStats.resource_total_count++;if(e.responseStatus>=400){b.error_count++;initialStats.resource_error_count++;}else{b.success_count++;initialStats.resource_success_count++;}b.total_size_bytes+=sz;b.max_size_bytes=Math.max(b.max_size_bytes,sz);b.total_duration_ms+=d;b.max_duration_ms=Math.max(b.max_duration_ms,d);initialStats.resource_total_size_bytes+=sz;initialStats.total_duration_ms+=d;}
+    function legacy(){return Object.assign({},initialStats);}
+    function detailSize(e){return number(e.transferSize)+number(e.encodedBodySize);}
+    function detailFold(e){tailwind=tailwind||String(e.name||'').indexOf('cdn.tailwindcss.com')!==-1;detailSlow.push(e);detailSlow.sort(function(a,b){return (b.duration||0)-(a.duration||0);});detailSlow.length=Math.min(detailSlow.length,policy.detail_top_count);detailLarge.push(e);detailLarge.sort(function(a,b){return detailSize(b)-detailSize(a);});detailLarge.length=Math.min(detailLarge.length,policy.detail_top_count);}
+
+    function emit(c,finalSnapshot){var buckets={};for(var i=0;i<records.length;i++){var r=records[i];if(r.owner!==c)continue;var category=r.outcome==='failed'?r.category:r.outcome==='success'||r.outcome==='pending'?'none':r.outcome;var key=r.type+'#'+category,b=buckets[key];if(!b)b=buckets[key]={resource_type:r.type,failure_category:category,request_count:0,success_count:0,failed_count:0,timeout_count:0,cancelled_count:0,unknown_count:0,pending_count:0,total_duration_ms:0,max_duration_ms:0,transfer_size_bytes:0,encoded_body_size_bytes:0,unknown_size_count:0};b.request_count++;b[r.outcome+'_count']++;var d=number(r.end===null?tick()-r.start:r.end-r.start);b.total_duration_ms+=d;b.max_duration_ms=Math.max(b.max_duration_ms,d);if(r.entry){b.transfer_size_bytes+=number(r.entry.transferSize);b.encoded_body_size_bytes+=number(r.entry.encodedBodySize);if(!(r.entry.transferSize>0||r.entry.encodedBodySize>0))b.unknown_size_count++;}else b.unknown_size_count++;}var payload=legacy();payload.resource_summary={revision:++c.revision,binding_generation:c.value.binding_generation,card_session_id:c.value.card_session_id,load_context:c.value.load_context,window_start_ms:c.start,window_end_ms:clock(),final_snapshot:finalSnapshot===true,coverage:Object.assign({},coverage),buckets:Object.keys(buckets).map(function(k){return buckets[k];})};send(payload);c.dirty=false;}
+    function flush(){timer=null;for(var i=0;i<contexts.length;i++)if(contexts[i].dirty)emit(contexts[i]);}
+    function changed(c){if(!c)return;c.dirty=true;if(timer===null)timer=setTimeout(flush,policy.flush_interval_ms);}
+    function ownerAt(start){for(var i=contexts.length-1;i>=0;i--){var c=contexts[i];if(start>=c.tickStart&&(c.tickEnd===null||start<c.tickEnd))return c;}return null;}
+    function begin(t,u,start,owner){owner=owner===undefined?active:owner;if(!owner)return null;if(records.length>=policy.max_requests){coverage.dropped_request_count++;changed(owner);return null;}var r={type:t,url:u,start:start,end:null,outcome:'pending',category:'none',owner:owner,entry:null,dynamic:false,errorObserved:false};records.push(r);changed(owner);return r;}
+    function finish(r,outcome,category){if(!r)return;r.outcome=outcome;r.category=category||'none';r.end=tick();changed(r.owner);}
+    function entry(e){if(!snapshotDone)legacyFold(e);if(!detailsDone)detailFold(e);var t=type(e.initiatorType),u=url(e.name),start=Number(e.startTime)||0,r=null;
+    for(var i=records.length-1;i>=0;i--){var a=records[i];if(a.entry&&a.entry.name===e.name&&a.entry.startTime===e.startTime&&a.entry.initiatorType===e.initiatorType)return;if(a.url===u&&a.type===t&&!a.entry&&((a.dynamic&&start>=a.start-1&&(a.end===null||start<=a.end+1))||a.errorObserved)){r=a;break;}}
+    if(!r)r=begin(t,u,start,ownerAt(start));if(!r)return;r.entry=e;if(r.errorObserved&&e.responseStatus>=400)r.category='http';if(!r.dynamic&&!r.errorObserved){r.outcome=status(e.responseStatus);r.category=r.outcome==='failed'?'http':'none';r.start=start;r.end=start+(Number(e.duration)||0);}changed(r.owner);}
+    function drain(){if(observer&&typeof observer.takeRecords==='function'){var es=observer.takeRecords();for(var i=0;i<es.length;i++)entry(es[i]);}}
+    function configure(c,atDocumentStart){if(!valid(c))return;drain();var next=null,k=contextKey(c);for(var i=0;i<contexts.length;i++)if(contextKey(contexts[i].value)===k)next=contexts[i];if(active&&(!c.sampled||active!==next)){active.tickEnd=tick();emit(active);active=null;}if(!c.sampled){active=null;return;}if(!next){if(contexts.length>=policy.max_contexts)return;next={value:c,start:c.observed_at_ms===undefined?clock():c.observed_at_ms,tickStart:atDocumentStart&&c.load_context==='preparation'?0:tick(),tickEnd:null,revision:0,dirty:true};contexts.push(next);}active=next;if(c.ended){drain();next.tickEnd=tick();emit(next,true);active=null;}else{installDynamicObservers();changed(next);}}
+    configure(initialContext,true);
+    window.addEventListener('message',function(e){if(e.source!==window.parent||!e.data||(e.data.type!=='sekai_feed_frame_bootstrap'&&e.data.type!=='sekai_resource_context'))return;var p=e.data.data||e.data.payload;if(p&&Object.prototype.hasOwnProperty.call(p,'gameResourceContext'))configure(p.gameResourceContext);});
+    try{if(window.PerformanceObserver){observer=new PerformanceObserver(function(list){var es=list.getEntries();for(var i=0;i<es.length;i++)entry(es[i]);});observer.observe({type:'resource',buffered:true});coverage.performance_observer=true;}}catch(_){observer=null;}
+    // Only a selected summary context needs dynamic network/error instrumentation.
+    // Unselected control games retain their existing API identities and caller effects.
+    function installDynamicObservers(){if(dynamicInstalled)return;dynamicInstalled=true;
+    if(coverage.fetch){var originalFetch=window.fetch;window.fetch=function(){if(!active)return originalFetch.apply(this,arguments);var r=begin('fetch',url(arguments[0]),tick());if(!r)return originalFetch.apply(this,arguments);r.dynamic=true;var result;try{result=originalFetch.apply(this,arguments);}catch(e){finish(r,'failed','network');throw e;}result.then(function(response){finish(r,status(response.status),response.status>=400?'http':'none');},function(error){finish(r,error&&error.name==='AbortError'?'cancelled':error&&error.name==='TimeoutError'?'timeout':'failed',error&&error.name==='AbortError'?'cancelled':error&&error.name==='TimeoutError'?'timeout':'network');});return result;};}
+    if(coverage.xhr){var proto=XMLHttpRequest.prototype,open=proto.open,xsend=proto.send,xurls=new WeakMap();proto.open=function(method,u){var result=open.apply(this,arguments);if(active)xurls.set(this,url(u));return result;};proto.send=function(){if(!active)return xsend.apply(this,arguments);var self=this,r=begin('xhr',xurls.get(this)||'',tick());if(!r)return xsend.apply(this,arguments);r.dynamic=true;var handlers={load:function(){finish(r,status(self.status),self.status>=400?'http':'none');},error:function(){finish(r,'failed','network');},abort:function(){finish(r,'cancelled','cancelled');},timeout:function(){finish(r,'timeout','timeout');}};Object.keys(handlers).forEach(function(name){self.addEventListener(name,handlers[name],{once:true});});self.addEventListener('loadend',function(){Object.keys(handlers).forEach(function(name){self.removeEventListener(name,handlers[name]);});},{once:true});try{return xsend.apply(this,arguments);}catch(e){finish(r,'failed','network');throw e;}};}
+    if(coverage.beacon){var beacon=navigator.sendBeacon;navigator.sendBeacon=function(u){if(!active)return beacon.apply(this,arguments);var r=begin('beacon',url(u),tick());if(r)r.dynamic=true;try{var result=beacon.apply(this,arguments);finish(r,'unknown','unknown');return result;}catch(e){finish(r,'failed','network');throw e;}};}
+    window.addEventListener('error',function(e){if(!active)return;var target=e.target;if(!target||target===window)return;var t=String(target.tagName||'').toLowerCase(),resourceType=({img:'image',script:'script',link:'stylesheet',audio:'audio',video:'video'})[t];if(!resourceType)return;var u=url(target.currentSrc||target.src||target.href),r=null;for(var i=records.length-1;i>=0;i--){var a=records[i];if(!a.dynamic&&a.url===u&&a.type===resourceType&&!a.errorObserved){r=a;break;}}if(!r)r=begin(resourceType,u,tick());if(r){r.errorObserved=true;finish(r,'failed',r.entry&&r.entry.responseStatus>=400?'http':'unknown');}},true);
+    }
+    function snapshot(){drain();if(coverage.performance_observer)send(legacy());snapshotDone=true;}
+    function resourceDetails(){drain();detailsDone=true;if(!coverage.performance_observer)return;function top(items){return items.map(function(e){var name=String(e.name||'').split('?')[0];return{name:name.length>policy.detail_name_max_chars?name.slice(name.length-policy.detail_name_max_chars):name,type:e.initiatorType||'other',duration_ms:number(e.duration),size_bytes:detailSize(e),status:e.responseStatus||0};});}var payload={tailwind_cdn_detected:tailwind,top_slowest:top(detailSlow),top_largest:top(detailLarge)};try{window.parent.postMessage({type:'sekai_iframe_perf_resource_details',payload:payload,data:payload},'*');}catch(_){}detailSlow=[];detailLarge=[];}
+
+    function onLoad(){setTimeout(snapshot,policy.initial_snapshot_delay_ms);setTimeout(resourceDetails,policy.initial_details_delay_ms);}
+    if(document.readyState==='complete')onLoad();else window.addEventListener('load',onLoad,{once:true});
+    })();(function(){try{var motionLs=[],orientLs=[];var onMotionProp=null,onOrientProp=null;var dispatchCount=0;var _prevHM=false;function _nm(){var h=motionLs.length>0||orientLs.length>0||!!onMotionProp||!!onOrientProp;if(h!==_prevHM){_prevHM=h;try{window.parent.postMessage({origin:'sekai_gaming_iframe_api',type:'sekai:motion-needed',needed:h,data:{needed:h}},'*');}catch(_){}}}var oAdd=EventTarget.prototype.addEventListener,oRem=EventTarget.prototype.removeEventListener;EventTarget.prototype.addEventListener=function(t,fn,o){if(this===window&&typeof fn==='function'){if(t==='devicemotion'){motionLs.push(fn);_nm();console.log('[SekaiMotionRx] devicemotion listener attached total='+motionLs.length);}else if(t==='deviceorientation'||t==='deviceorientationabsolute'){orientLs.push(fn);_nm();console.log('[SekaiMotionRx] '+t+' listener attached total='+orientLs.length);}}return oAdd.call(this,t,fn,o);};EventTarget.prototype.removeEventListener=function(t,fn,o){if(this===window&&typeof fn==='function'){var a=t==='devicemotion'?motionLs:(t==='deviceorientation'||t==='deviceorientationabsolute')?orientLs:null;if(a){var i=a.indexOf(fn);if(i!==-1){a.splice(i,1);_nm();}}}return oRem.call(this,t,fn,o);};function defProp(name,getFn,setFn){try{Object.defineProperty(window,name,{configurable:true,get:getFn,set:setFn});}catch(_){}}defProp('ondevicemotion',function(){return onMotionProp;},function(fn){onMotionProp=typeof fn==='function'?fn:null;_nm();console.log('[SekaiMotionRx] ondevicemotion assigned='+!!onMotionProp);});defProp('ondeviceorientation',function(){return onOrientProp;},function(fn){onOrientProp=typeof fn==='function'?fn:null;_nm();console.log('[SekaiMotionRx] ondeviceorientation assigned='+!!onOrientProp);});function stubPerm(ctor,name){if(!ctor)return;try{ctor.requestPermission=function(){console.log('[SekaiMotionRx] '+name+'.requestPermission() -> granted (stub)');return Promise.resolve('granted');};}catch(_){}}stubPerm(window.DeviceMotionEvent,'DeviceMotionEvent');stubPerm(window.DeviceOrientationEvent,'DeviceOrientationEvent');console.log('[SekaiMotionRx] receiver installed; DME='+(typeof window.DeviceMotionEvent)+' DOE='+(typeof window.DeviceOrientationEvent));window.addEventListener('message',function(e){var d=e.data;if(!d||typeof d!=='object')return;if(d.type==='__sekai_device_motion__'){if(d.data&&typeof d.data==='object'&&!Array.isArray(d.data))d=Object.assign(Object.create(null),d,d.data,{type:d.type});var ev={type:'devicemotion',acceleration:d.acceleration||null,accelerationIncludingGravity:d.accelerationIncludingGravity||null,rotationRate:d.rotationRate||null,interval:d.interval||16,timeStamp:d.timestamp||Date.now(),target:window,currentTarget:window,preventDefault:function(){},stopPropagation:function(){},stopImmediatePropagation:function(){}};if(dispatchCount===0)console.log('[SekaiMotionRx] first motion dispatch ls='+motionLs.length+' prop='+!!onMotionProp);dispatchCount++;for(var i=0;i<motionLs.length;i++){try{motionLs[i].call(window,ev);}catch(_){}}if(onMotionProp){try{onMotionProp.call(window,ev);}catch(_){}}}else if(d.type==='__sekai_device_orientation__'){if(d.data&&typeof d.data==='object'&&!Array.isArray(d.data))d=Object.assign(Object.create(null),d,d.data,{type:d.type});var oe={type:'deviceorientation',alpha:d.alpha==null?null:d.alpha,beta:d.beta==null?null:d.beta,gamma:d.gamma==null?null:d.gamma,absolute:!!d.absolute,timeStamp:d.timestamp||Date.now(),target:window,currentTarget:window,preventDefault:function(){},stopPropagation:function(){},stopImmediatePropagation:function(){}};if(dispatchCount===0)console.log('[SekaiMotionRx] first orientation dispatch ls='+orientLs.length+' prop='+!!onOrientProp);dispatchCount++;for(var j=0;j<orientLs.length;j++){try{orientLs[j].call(window,oe);}catch(_){}}if(onOrientProp){try{onOrientProp.call(window,oe);}catch(_){}}}});}catch(e){console.log('[SekaiMotionRx] install error: '+e);}})();(function(){var last=false,sched=false;function isAudible(el){try{if(el.paused||el.ended||el.muted)return false;var v=typeof el.volume==='number'?el.volume:1;return v>0;}catch(_){return false;}}function compute(){var ls=document.querySelectorAll('audio,video');for(var i=0;i<ls.length;i++){if(isAudible(ls[i]))return true;}return false;}function notify(){var a=compute();if(a===last)return;last=a;try{var ts=Date.now();window.parent.postMessage({type:a?'sekai_iframe_audio_playing_started':'sekai_iframe_audio_playing_stopped',timestamp:ts,data:{timestamp:ts}},'*');}catch(_){}}function schedule(){if(sched)return;sched=true;Promise.resolve().then(function(){sched=false;notify();});}['play','playing','pause','ended','volumechange','emptied'].forEach(function(n){document.addEventListener(n,function(e){var t=e.target&&e.target.tagName;if(t!=='AUDIO'&&t!=='VIDEO')return;schedule();},true);})})();</script><script data-sekai-pc-controls="1">(function(){try{if(!window.matchMedia||!window.matchMedia('(pointer: fine)').matches)return;}catch(_m){return;}var oAEL=EventTarget.prototype.addEventListener,oREL=EventTarget.prototype.removeEventListener;var regs=new WeakMap(),gesture=null;function capOf(o){return typeof o==='boolean'?o:!!(o&&o.capture);}function find(node,type,fn,capture){var l=regs.get(node)||[];for(var i=0;i<l.length;i++){if(l[i].type===type&&l[i].fn===fn&&l[i].capture===capture)return l[i];}return null;}function drop(node,r){var l=regs.get(node);var i=l?l.indexOf(r):-1;if(i===-1)return;l.splice(i,1);if(r.proxy)oREL.call(node,'pointerdown',r.proxy,r.capture);}function touchLike(type,e,node,target){var pt={clientX:e.clientX,clientY:e.clientY,pageX:e.pageX,pageY:e.pageY,screenX:e.screenX,screenY:e.screenY,radiusX:1,radiusY:1,force:1,identifier:1,target:target};var list=type==='touchend'?[]:[pt];return{type:type,target:target,currentTarget:node,timeStamp:e.timeStamp||Date.now(),touches:list,targetTouches:list,changedTouches:[pt],preventDefault:function(){},stopPropagation:function(){},stopImmediatePropagation:function(){}};}function pathOf(e,el){if(typeof e.composedPath==='function'){var p=e.composedPath();if(p&&p.length)return p;}var out=[],n=e.target||el;while(n){out.push(n);n=n.parentNode;}out.push(window);return out;}function fire(type,e){var g=gesture;for(var n=0;n<g.path.length;n++){var node=g.path[n],l=regs.get(node);if(!l)continue;l=l.slice();var evt=touchLike(type,e,node,g.target);for(var i=0;i<l.length;i++){if(l[i].type!==type)continue;if(l[i].once)drop(node,l[i]);try{l[i].fn.call(node,evt);}catch(_f){}}}}function release(){var g=gesture;gesture=null;if(g){try{g.target.releasePointerCapture(g.ptr);}catch(_r){}}}function end(e){if(!gesture)return;fire('touchend',e);release();}function isMouse(e){return e.pointerType==='mouse';}EventTarget.prototype.addEventListener=function(type,listener,options){var el=this;if(typeof listener==='function'&&(type==='touchstart'||type==='touchmove'||type==='touchend')){var capture=capOf(options),opts=options&&typeof options==='object'?options:null,sig=opts&&opts.signal;if(!find(el,type,listener,capture)&&!(sig&&sig.aborted)){var r={type:type,fn:listener,capture:capture,once:!!(opts&&opts.once),proxy:null};if(type==='touchstart'){r.proxy=function(e){if(!isMouse(e)||e.button!==0)return;if(!gesture||gesture.e!==e){end(e);gesture={e:e,target:e.target||el,ptr:e.pointerId,path:pathOf(e,el)};try{gesture.target.setPointerCapture(e.pointerId);}catch(_c){}}if(r.once)drop(el,r);try{listener.call(el,touchLike('touchstart',e,el,gesture.target));}catch(_l){}};oAEL.call(el,'pointerdown',r.proxy,capture);}var l=regs.get(el);if(!l){l=[];regs.set(el,l);}l.push(r);if(sig){try{oAEL.call(sig,'abort',function(){drop(el,r);});}catch(_s){}}}}return oAEL.call(el,type,listener,options);};EventTarget.prototype.removeEventListener=function(type,listener,options){if(typeof listener==='function'){var r=find(this,type,listener,capOf(options));if(r)drop(this,r);}return oREL.call(this,type,listener,options);};oAEL.call(document,'pointermove',function(e){if(!gesture||!isMouse(e))return;if(e.buttons===0){end(e);return;}fire('touchmove',e);},{capture:true,passive:true});oAEL.call(document,'pointerup',function(e){if(gesture&&isMouse(e))end(e);},{capture:true});oAEL.call(document,'pointercancel',function(e){if(gesture&&isMouse(e))end(e);},{capture:true});oAEL.call(document,'lostpointercapture',function(e){if(gesture&&e.pointerId===gesture.ptr&&e.target===gesture.target)end(e);},{capture:true});})();</script><script data-sekai-page-script>(function() {
+  var ORIGIN = 'sekai_gaming_iframe_api';
+
+  // Every Audio the game constructs, held weakly where the browser can. A subclass the game
+  // declares (`class Sfx extends Audio`) is built as itself, through Reflect.construct.
+  var made = [];
+  var Previous = window.Audio;
+  if (typeof Previous === 'function') {
+    var Tracked = function(src) {
+      var audio =
+        new.target && new.target !== Tracked && typeof Reflect !== 'undefined'
+          ? Reflect.construct(Previous, arguments, new.target)
+          : arguments.length ? new Previous(src) : new Previous();
+      made.push(typeof WeakRef === 'function' ? new WeakRef(audio) : audio);
+      // Prune as it grows, so a game that makes a sound per shot does not pile up dead refs.
+      if (made.length % 64 === 0) madeAudio();
+      return audio;
+    };
+    Tracked.prototype = Previous.prototype;
+    window.Audio = Tracked;
+  }
+
+  function madeAudio() {
+    var alive = [];
+    var kept = [];
+    for (var i = 0; i < made.length; i++) {
+      var entry = made[i];
+      var audio = typeof WeakRef === 'function' && entry instanceof WeakRef ? entry.deref() : entry;
+      if (!audio) continue;
+      alive.push(audio);
+      kept.push(entry);
+    }
+    made = kept;
+    return alive;
+  }
+
+  function applyVolumeByUrl(url, volume) {
+    if (!url) return;
+    var vol = Math.max(0, Math.min(1, Number(volume)));
+    if (isNaN(vol)) return;
+    var seen = [];
+    function apply(el) {
+      if (!el || seen.indexOf(el) !== -1) return;
+      seen.push(el);
+      var src = el.src || el.currentSrc || '';
+      if (src === url) el.volume = vol;
+    }
+    document.querySelectorAll('audio').forEach(apply);
+    madeAudio().forEach(apply);
+    // The old Create's shim also publishes its mute layer's list, which holds media this script
+    // never saw made (created before it ran, or through createElement). The Shell's frame does not.
+    try {
+      if (typeof window.__sekaiTrackedMedia === 'function') {
+        window.__sekaiTrackedMedia().forEach(apply);
+      }
+    } catch (e) {
+      // A missing or throwing accessor must not break the paths above.
+    }
+  }
+
+  // The volumes the saved document carries: the game's code does not read the field.
+  function applyInitialVolumes() {
+    var meta = window.sekaiEditable;
+    if (!meta) return;
+    var items = (meta.music || []).concat(meta.sfx || []);
+    items.forEach(function(item) {
+      if (item.value && item.volume !== undefined && item.volume !== null) {
+        applyVolumeByUrl(item.value, item.volume);
+      }
+    });
+  }
+
+  // As soon as the document is parsed, and again for sounds made during the game's start.
+  if (document.readyState !== 'loading') {
+    applyInitialVolumes();
+  } else {
+    document.addEventListener('DOMContentLoaded', applyInitialVolumes);
+  }
+  setTimeout(applyInitialVolumes, 500);
+  setTimeout(applyInitialVolumes, 1500);
+
+  window.addEventListener('message', function(event) {
+    var data = event.data;
+    if (!data || data.origin !== ORIGIN) return;
+    var payload = data.data;
+    if (!payload) return;
+    if (data.type === 'set_audio_volume') {
+      applyVolumeByUrl(payload.url, payload.volume);
+    } else if (data.type === 'apply_change' && payload.volume !== undefined && payload.volume !== null) {
+      applyVolumeByUrl(payload.value, payload.volume);
+    }
+  }, true);
+})();</script><script data-sekai-page-script>(function() {
+  var ORIGIN = 'sekai_gaming_iframe_api';
+
+  window.addEventListener('message', function(event) {
+    var msg = event.data;
+    if (!msg || msg.type !== 'sekai_font_data_response') return;
+
+    var prevStyle = document.getElementById('sekai-font-' + msg.itemId);
+    if (prevStyle) prevStyle.parentNode.removeChild(prevStyle);
+
+    var style = document.createElement('style');
+    style.id = 'sekai-font-' + msg.itemId;
+    // font-weight range covers all weights so we don't need per-weight rules.
+    style.textContent = "@font-face { font-family: '" + msg.family + "'; src: url('" + msg.dataUrl + "'); font-weight: 100 900; }";
+    document.head.appendChild(style);
+
+    if (msg.cssVar) {
+      document.documentElement.style.setProperty(msg.cssVar, "'" + msg.family + "'");
+    }
+  });
+
+  window.addEventListener('message', function(event) {
+    var data = event.data;
+    if (!data || data.origin !== ORIGIN) return;
+    if (data.type !== 'apply_change') return;
+
+    var payload = data.data;
+    if (!payload || !payload.value) return;
+
+    var meta = window.sekaiEditable;
+    if (!meta) return;
+
+    // No type guard: LLM-generated sekaiEditable often omits the type field.
+    if (meta.fonts) {
+      for (var i = 0; i < meta.fonts.length; i++) {
+        var font = meta.fonts[i];
+        if (font.id === payload.id) {
+          font.value = payload.value;
+          if (payload.name) font.name = payload.name;
+          var fontRequest = {
+            itemId: font.id,
+            fontUrl: payload.value,
+            family: font.fallback || ('sekai-swap-' + font.id),
+            cssVar: font.cssVar || null,
+          };
+          // SEK-13607 F4b: the request is the message's data. The top-level copy
+          // is for a parent page from before that change, which reads it there.
+          window.parent.postMessage({
+            origin: ORIGIN,
+            type: 'sekai_request_font_data',
+            itemId: fontRequest.itemId,
+            fontUrl: fontRequest.fontUrl,
+            family: fontRequest.family,
+            cssVar: fontRequest.cssVar,
+            data: fontRequest,
+          }, '*');
+          return;
+        }
+      }
+    }
+
+    if (meta.models) {
+      for (var j = 0; j < meta.models.length; j++) {
+        var model = meta.models[j];
+        if (model.id === payload.id) {
+          model.value = payload.value;
+          if (payload.name) model.name = payload.name;
+          return;
+        }
+      }
+    }
+  }, true);
+})();</script>
+  
+<script data-sekai-errors="sekai-mcp">window.__sekaiErrors=window.__sekaiErrors||[];window.addEventListener('error',function(e){window.__sekaiErrors.push({m:String(e.message||e),s:e.filename,l:e.lineno});});window.addEventListener('unhandledrejection',function(e){window.__sekaiErrors.push({m:String(e.reason)});});</script>
+    <script data-sekai-editable>
+window.sekaiEditable = {
+  "images": [
+    {
+      "id": "loading_art",
+      "label": "Loading_Art",
+      "type": "image",
+      "value": "assets/preload/loading-art.webp",
+      "source": "inherited",
+      "description": "loading_art",
+      "selector": "[data-sekai-slot=\"images:loading_art\"]",
+      "property": "src"
+    }
+  ],
+  "music": [],
+  "sfx": [],
+  "fonts": [],
+  "models": [],
+  "videos": [],
+  "tune": [
+    {
+      "id": "stage_length",
+      "label": "Stage_Length",
+      "type": "slider",
+      "value": 1500,
+      "min": 0,
+      "max": 4500.0,
+      "step": 1
+    }
+  ],
+  "text": [
+    {
+      "id": "stage_1",
+      "label": "Stage_1",
+      "type": "text",
+      "value": "Pumpkin Yard"
+    },
+    {
+      "id": "stage_2",
+      "label": "Stage_2",
+      "type": "text",
+      "value": "The Hollow Crypt"
+    },
+    {
+      "id": "stage_3",
+      "label": "Stage_3",
+      "type": "text",
+      "value": "Witchlight Row"
+    },
+    {
+      "id": "stage_4",
+      "label": "Stage_4",
+      "type": "text",
+      "value": "The Bone Market"
+    },
+    {
+      "id": "stage_5",
+      "label": "Stage_5",
+      "type": "text",
+      "value": "Gate of Embers"
+    },
+    {
+      "id": "tip_1",
+      "label": "Tip_1",
+      "type": "text",
+      "value": "Swipe to dodge the coffins"
+    },
+    {
+      "id": "tip_2",
+      "label": "Tip_2",
+      "type": "text",
+      "value": "Run up a ramp to reach the lids"
+    },
+    {
+      "id": "tip_3",
+      "label": "Tip_3",
+      "type": "text",
+      "value": "Candy buys treats in the shop"
+    },
+    {
+      "id": "tip_4",
+      "label": "Tip_4",
+      "type": "text",
+      "value": "Share to rise again when the ghost catches you"
+    },
+    {
+      "id": "tip_5",
+      "label": "Tip_5",
+      "type": "text",
+      "value": "Grab the broom and fly over everything"
+    },
+    {
+      "id": "tip_6",
+      "label": "Tip_6",
+      "type": "text",
+      "value": "The cauldron pulls candy towards you"
+    },
+    {
+      "id": "tip_7",
+      "label": "Tip_7",
+      "type": "text",
+      "value": "Tilt controls live in Settings"
+    }
+  ],
+  "colors": [
+    {
+      "id": "night_sky",
+      "label": "Night_Sky",
+      "type": "color",
+      "value": "#160c2a",
+      "cssVar": "--sekai-night_sky"
+    },
+    {
+      "id": "loading_ground",
+      "label": "Loading_Ground",
+      "type": "color",
+      "value": "#4a2c7a",
+      "cssVar": "--sekai-loading_ground"
+    },
+    {
+      "id": "loading_sky",
+      "label": "Loading_Sky",
+      "type": "color",
+      "value": "#43246f",
+      "cssVar": "--sekai-loading_sky"
+    },
+    {
+      "id": "moon",
+      "label": "Moon",
+      "type": "color",
+      "value": "#ffe6b0",
+      "cssVar": "--sekai-moon"
+    },
+    {
+      "id": "accent",
+      "label": "Accent",
+      "type": "color",
+      "value": "#ffb347",
+      "cssVar": "--sekai-accent"
+    }
+  ],
+  "prompts": [],
+  "voices": []
+};
+</script> <!-- sekai:keep -->
+    <script type="importmap">{"imports":{}}</script> <!-- sekai:keep=importmap -->
+    <script src="./asset-urls.js" data-sekai-platform="asset-urls"></script> <!-- sekai:keep -->
+    <script type="module" src="./js/sekai/bridge/audioUnlock.js" data-sekai-platform="audio-unlock"></script> <!-- sekai:keep -->
+    <script type="module" src="./js/sekai/bridge/editable.js" data-sekai-platform="editable-bridge"></script> <!-- sekai:keep -->
+    <script type="module" src="./js/sekai/bridge/assetUrls.js" data-sekai-platform="asset-bridge"></script> <!-- sekai:keep -->
+<script>
+//#region @sekai:audio-unlock · unlock audio on the first user gesture
+(function() {
+  let audioUnlocked = false;
+  function unlockAudioContext() {
+    if (audioUnlocked) return;
+    if ('audioSession' in window.navigator) {
+      window.navigator.audioSession.type = "playback";
+    }
+    try {
+      const AudioContext = window.AudioContext || window.webkitAudioContext;
+      if (AudioContext) {
+        const context = new AudioContext();
+        if (context.state === 'suspended') context.resume();
+        const buffer = context.createBuffer(1, 1, 22050);
+        const source = context.createBufferSource();
+        source.buffer = buffer;
+        source.connect(context.destination);
+        source.start(0);
+      }
+    } catch (e) {}
+    try {
+      const audio = new Audio();
+      audio.src = 'data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQAAAAA=';
+      audio.play().then(() => { audio.pause(); audio.currentTime = 0; }).catch(() => {});
+    } catch (e) {}
+    audioUnlocked = true;
+  }
+  window.addEventListener('message', function(event) {
+    if (event.data?.origin === 'sekai_gaming_iframe_api' && event.data?.type === 'receive_audio_unlock') {
+      unlockAudioContext();
+    }
+  });
+  ['touchstart', 'touchend', 'mousedown', 'click', 'keydown'].forEach(function(event) {
+    document.addEventListener(event, unlockAudioContext, { once: true });
+  });
+})();
+//#endregion @sekai:audio-unlock
+</script>
+<script data-sekai-editable-runtime="sekai-mcp">
+/* Sekai preview-editing runtime (sekai-mcp copy).
+ *
+ * Injected by sekai_publish_game into a game that does not already carry the
+ * Sekai editable bridge, so the Sekai app's Edit panel can talk to it. It is a
+ * port of the g3 backend's reference bridge (sekai-backend-g3
+ * app/router_web_backend/game/prompt/modular_prompt/phase2_prompt_builder.py,
+ * section "SEKAI EDITABLE METADATA"), which is what every g3-generated game
+ * ships. Same postMessage protocol (origin 'sekai_gaming_iframe_api'):
+ *   get_editable_metadata -> receive_editable_metadata  (window.sekaiEditable)
+ *   apply_change          -> receive_apply_change       (live edit, no reload)
+ *   set_audio_volume                                   (music / sfx volume)
+ *   get_current_html      -> receive_current_html
+ *   reset_changes                                      (location.reload)
+ *
+ * Two rules this file must keep:
+ *  - it never spells out the table assignment (dot access followed by "= {"):
+ *    g3's save path rewrites the FIRST such assignment in the html, which
+ *    must be the author's (or the injected) table, never this runtime;
+ *  - it reads the table lazily (window['sekaiEditable'] at call time), so a
+ *    table assigned later in the body, or by a deferred module, still wins.
+ *
+ * Idempotent: a page that already defines window.__sekaiEditableRuntime is
+ * left alone.
+ */
+(function sekaiEditableRuntime() {
+  //#region @sekai:editable-runtime · bridge editable values and relay editor messages
+  if (window.__sekaiEditableRuntime) return;
+  window.__sekaiEditableRuntime = 'sekai-mcp';
+
+  var KEY = 'sekaiEditable';
+  var CATEGORIES = ['tune', 'images', 'videos', 'music', 'sfx', 'colors', 'text',
+    'prompts', 'voices', 'fonts', 'models'];
+
+  // The table, normalised to the 11-category shape the editor expects.
+  function table() {
+    var t = window[KEY];
+    if (!t || typeof t !== 'object') {
+      t = {};
+      window[KEY] = t;
+    }
+    for (var i = 0; i < CATEGORIES.length; i++) {
+      if (!Array.isArray(t[CATEGORIES[i]])) t[CATEGORIES[i]] = [];
+    }
+    return t;
+  }
+
+  function getConfig(category, id, fallback) {
+    var t = window[KEY];
+    var arr = t && t[category];
+    if (!Array.isArray(arr)) return fallback;
+    for (var j = 0; j < arr.length; j++) {
+      if (arr[j] && arr[j].id === id) {
+        var v = arr[j].value;
+        return (v === undefined || v === null || v === '') ? fallback : v;
+      }
+    }
+    return fallback;
+  }
+
+  function setNestedValue(obj, path, value) {
+    var parts = String(path).split('.');
+    var current = obj;
+    for (var k = 0; k < parts.length - 1; k++) {
+      if (!current[parts[k]]) current[parts[k]] = {};
+      current = current[parts[k]];
+    }
+    current[parts[parts.length - 1]] = value;
+  }
+
+  function applyToElement(item, value) {
+    var el = document.querySelector(item.selector);
+    if (!el) return false;
+    if (el.tagName === 'AUDIO') {
+      var wasPlaying = !el.paused;
+      el.src = value;
+      el.load();
+      if (typeof item.volume === 'number') el.volume = Math.min(1, Math.max(0, item.volume));
+      if (wasPlaying) el.play().catch(function () {});
+    } else if (el.tagName === 'VIDEO') {
+      el.src = value;
+      el.load();
+    } else if (item.property === 'src') {
+      el.src = value;
+    } else if (item.property === 'backgroundImage') {
+      el.style.backgroundImage = "url('" + value + "')";
+    } else if (item.property === 'placeholder') {
+      el.placeholder = value;
+    } else if (item.property === 'fontFamily') {
+      el.style.fontFamily = value;
+    } else {
+      el.textContent = value;
+    }
+    return true;
+  }
+
+  function applyItem(item, value) {
+    if (item.cssVar) {
+      document.documentElement.style.setProperty(item.cssVar, value);
+      return true;
+    }
+    if (item.path) {
+      setNestedValue(window, item.path, value);
+      return true;
+    }
+    if (item.selector) return applyToElement(item, value);
+    return true; // value-only slot: the game reads it back through getConfig
+  }
+
+  function applyAllEditableValues() {
+    var t = table();
+    for (var c = 0; c < CATEGORIES.length; c++) {
+      var items = t[CATEGORIES[c]];
+      for (var n = 0; n < items.length; n++) {
+        var item = items[n];
+        if (!item || item.value === undefined || item.value === null || item.value === '') continue;
+        try { applyItem(item, item.value); } catch (e) { /* keep going */ }
+      }
+    }
+    try { window.dispatchEvent(new CustomEvent('sekai:editable-applied')); } catch (e) { /* old engines */ }
+  }
+
+  function findItem(id) {
+    var t = table();
+    for (var c = 0; c < CATEGORIES.length; c++) {
+      var items = t[CATEGORIES[c]];
+      for (var n = 0; n < items.length; n++) {
+        if (items[n] && items[n].id === id) return items[n];
+      }
+    }
+    return null;
+  }
+
+  function applySingleChange(id, value, name, description, opts) {
+    var item = findItem(id);
+    if (!item) return false;
+    item.value = value;
+    if (name) item.name = name;
+    if (description) item.description = description;
+    if (opts) {
+      if (typeof opts.volume === 'number') item.volume = opts.volume;
+      if (opts.originalValue !== undefined) item.originalValue = opts.originalValue;
+      if (opts.coverUrl !== undefined) item.coverUrl = opts.coverUrl;
+    }
+    var ok = applyItem(item, value);
+    try {
+      window.dispatchEvent(new CustomEvent('sekai:editable-change', { detail: { id: id, value: value, item: item } }));
+    } catch (e) { /* old engines */ }
+    return ok;
+  }
+
+  function post(type, taskId, data) {
+    window.parent.postMessage({ origin: 'sekai_gaming_iframe_api', type: type, taskId: taskId, data: data }, '*');
+  }
+
+  window.addEventListener('message', function (event) {
+    var msg = event.data;
+    if (!msg || msg.origin !== 'sekai_gaming_iframe_api') return;
+    switch (msg.type) {
+      case 'get_editable_metadata':
+        post('receive_editable_metadata', msg.taskId, table());
+        break;
+      case 'apply_change': {
+        var d = msg.data || {};
+        var success = false;
+        try { success = applySingleChange(d.id, d.value, d.name, d.description, d); } catch (e) { success = false; }
+        post('receive_apply_change', msg.taskId, { success: success });
+        break;
+      }
+      case 'set_audio_volume': {
+        var vd = msg.data || {};
+        if (typeof vd.volume === 'number') {
+          var target = findItem(vd.id);
+          if (target) {
+            target.volume = vd.volume;
+            if (target.selector) {
+              var el = document.querySelector(target.selector);
+              if (el) el.volume = Math.min(1, Math.max(0, vd.volume));
+            }
+          }
+        }
+        break;
+      }
+      case 'get_current_html':
+        post('receive_current_html', msg.taskId, { html: document.documentElement.outerHTML });
+        break;
+      case 'reset_changes':
+        location.reload();
+        break;
+    }
+  });
+
+  window.getConfig = window.getConfig || getConfig;
+  window.applyAllEditableValues = window.applyAllEditableValues || applyAllEditableValues;
+  window.sekaiApplyEditableValues = applyAllEditableValues;
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', applyAllEditableValues);
+  } else {
+    applyAllEditableValues();
+  }
+})();
+  //#endregion @sekai:editable-runtime
+</script>
+
+<script id="remix">
+/* =====================================================================================================================
+   REMIX BLOCK. Everything a remix usually changes is here, as plain data. The scripts further down read these tables
+   and keep no copy of their own. Change values freely; keep the keys.
+
+     FEEL        how long a stage is (the owner can also move it from Sekai's edit panel)
+     TEXT        the five stage names and the tips on the loading screen
+     COLOURS     the night sky in the game, the treats you collect, the candy on the loading screen
+     ASSETS      address of every file the game loads: textures, models, music, sound, fonts, words
+
+   To rename a stage or rewrite a tip, change its line in TEXT. To recolour the night, change COLOURS.nightSky.
+   To swap the music, a sound or a texture, change its address in ASSETS (the key is the name the game asks for;
+   keep the file type and, for textures, the size). The loading screen's own colours are the --sekai-* values in
+   the page's style block.
+   ===================================================================================================================== */
+if (typeof window.getConfig !== 'function') window.getConfig = function (category, id, fallback) { return fallback; };   // Sekai defines it once hosted
+
+window.REMIX = {
+  // ---------- Feel ----------
+  FEEL: {
+    stageLength: getConfig('tune', 'stage_length', 1500),      // distance run before the next stage is announced
+  },
+
+  // ---------- Words ----------
+  TEXT: {
+    stages: [
+      getConfig('text', 'stage_1', 'Pumpkin Yard'),
+      getConfig('text', 'stage_2', 'The Hollow Crypt'),
+      getConfig('text', 'stage_3', 'Witchlight Row'),
+      getConfig('text', 'stage_4', 'The Bone Market'),
+      getConfig('text', 'stage_5', 'Gate of Embers'),
+    ],
+    tips: [
+      getConfig('text', 'tip_1', 'Swipe to dodge the coffins'),
+      getConfig('text', 'tip_2', 'Run up a ramp to reach the lids'),
+      getConfig('text', 'tip_3', 'Candy buys treats in the shop'),
+      getConfig('text', 'tip_4', 'Share to rise again when the ghost catches you'),
+      getConfig('text', 'tip_5', 'Grab the broom and fly over everything'),
+      getConfig('text', 'tip_6', 'The cauldron pulls candy towards you'),
+      getConfig('text', 'tip_7', 'Tilt controls live in Settings'),
+    ],
+  },
+
+  // ---------- Colours ----------
+  COLOURS: {
+    nightSky: getConfig('colors', 'night_sky', '#160c2a'),
+    // Treats are drawn in two colours each: [wrapper, stripe].
+    treats: [['#ff4f8b', '#fff3dc'], ['#8df04a', '#1d0f33'], ['#ff8c1a', '#1d0f33'], ['#b06cf0', '#fff3dc'], ['#ffe873', '#ff4f8b'], ['#4fd3ff', '#fff3dc']],
+    loadingCandy: ['#ff6fa3', '#9bdc4a', '#ffb347', '#c08bff', '#ff6fa3', '#9bdc4a'],
+  },
+
+  // ---------- Files ----------
+  ASSETS: {
+    "asset-sizes.json": "asset-sizes.json",
+    "assets/animations-basic/catch.pk": "assets/animations-basic/catch.pk",
+    "assets/animations-basic/enemy-dog-catch.pk": "assets/animations-basic/enemy-dog-catch.pk",
+    "assets/animations-basic/enemy-dog-movement.pk": "assets/animations-basic/enemy-dog-movement.pk",
+    "assets/animations-basic/enemy-guard-catch.pk": "assets/animations-basic/enemy-guard-catch.pk",
+    "assets/animations-basic/enemy-guard-movement.pk": "assets/animations-basic/enemy-guard-movement.pk",
+    "assets/animations-basic/jetpack.pk": "assets/animations-basic/jetpack.pk",
+    "assets/animations-basic/movement.pk": "assets/animations-basic/movement.pk",
+    "assets/animations-basic/pogostick.pk": "assets/animations-basic/pogostick.pk",
+    "assets/animations-idle/idle.pk": "assets/animations-idle/idle.pk",
+    "assets/audio-basic/guard-catch.ogg": "assets/audio-basic/guard-catch.ogg",
+    "assets/audio-basic/guard-proximity.ogg": "assets/audio-basic/guard-proximity.ogg",
+    "assets/audio-basic/guard-start.ogg": "assets/audio-basic/guard-start.ogg",
+    "assets/audio-basic/hero-death-hitcam.ogg": "assets/audio-basic/hero-death-hitcam.ogg",
+    "assets/audio-basic/hero-death.ogg": "assets/audio-basic/hero-death.ogg",
+    "assets/audio-basic/hero-dodge.ogg": "assets/audio-basic/hero-dodge.ogg",
+    "assets/audio-basic/hero-foot-l.ogg": "assets/audio-basic/hero-foot-l.ogg",
+    "assets/audio-basic/hero-foot-r.ogg": "assets/audio-basic/hero-foot-r.ogg",
+    "assets/audio-basic/hero-hoverboard-crash.ogg": "assets/audio-basic/hero-hoverboard-crash.ogg",
+    "assets/audio-basic/hero-jump.ogg": "assets/audio-basic/hero-jump.ogg",
+    "assets/audio-basic/hero-revive.ogg": "assets/audio-basic/hero-revive.ogg",
+    "assets/audio-basic/hero-roll.ogg": "assets/audio-basic/hero-roll.ogg",
+    "assets/audio-basic/hero-stumble.ogg": "assets/audio-basic/hero-stumble.ogg",
+    "assets/audio-basic/unlock.ogg": "assets/audio-basic/unlock.ogg",
+    "assets/audio-full/hero-sneakers-foot-l.ogg": "assets/audio-full/hero-sneakers-foot-l.ogg",
+    "assets/audio-full/hero-sneakers-foot-r.ogg": "assets/audio-full/hero-sneakers-foot-r.ogg",
+    "assets/audio-full/hero-sneakers-jump.ogg": "assets/audio-full/hero-sneakers-jump.ogg",
+    "assets/audio-full/pickup-coin.ogg": "assets/audio-full/pickup-coin.ogg",
+    "assets/audio-full/pickup-powerdown.ogg": "assets/audio-full/pickup-powerdown.ogg",
+    "assets/audio-full/pickup-powerup.ogg": "assets/audio-full/pickup-powerup.ogg",
+    "assets/audio-full/special-jetpack-start.ogg": "assets/audio-full/special-jetpack-start.ogg",
+    "assets/audio-full/special-jetpack.ogg": "assets/audio-full/special-jetpack.ogg",
+    "assets/audio-full/special-magnet.ogg": "assets/audio-full/special-magnet.ogg",
+    "assets/audio-idle/gui-coin.ogg": "assets/audio-idle/gui-coin.ogg",
+    "assets/audio-idle/gui-tap.ogg": "assets/audio-idle/gui-tap.ogg",
+    "assets/audio-idle/mission-notification.ogg": "assets/audio-idle/mission-notification.ogg",
+    "assets/audio-idle/open-prize.ogg": "assets/audio-idle/open-prize.ogg",
+    "assets/characters-idle/avatar_jake.pk": "assets/characters-idle/avatar_jake.pk",
+    "assets/characters-idle/jake-tex-1.webp": "assets/characters-idle/jake-tex-1.webp",
+    "assets/characters-idle/jake-tex-2.webp": "assets/characters-idle/jake-tex-2.webp",
+    "assets/characters-idle/jake-tex.webp": "assets/characters-idle/jake-tex.webp",
+    "assets/data/awards.json": "assets/data/awards.json",
+    "assets/data/chunks-basic.json": "assets/data/chunks-basic.json",
+    "assets/data/chunks-full.json": "assets/data/chunks-full.json",
+    "assets/data/chunks-idle.json": "assets/data/chunks-idle.json",
+    "assets/data/lang-en.json": "assets/data/lang-en.json",
+    "assets/data/lang-pt-br.json": "assets/data/lang-pt-br.json",
+    "assets/font/lilita-one.woff2": "assets/font/lilita-one.woff2",
+    "assets/font/stencilia.woff2": "assets/font/stencilia.woff2",
+    "assets/font/titan-one.woff2": "assets/font/titan-one.woff2",
+    "assets/game-basic/caustic.webp": "assets/game-basic/caustic.webp",
+    "assets/game-basic/character-props.pk": "assets/game-basic/character-props.pk",
+    "assets/game-basic/character_shadow.webp": "assets/game-basic/character_shadow.webp",
+    "assets/game-basic/default-particle.webp": "assets/game-basic/default-particle.webp",
+    "assets/game-basic/effects-tex.webp": "assets/game-basic/effects-tex.webp",
+    "assets/game-basic/enemies.webp": "assets/game-basic/enemies.webp",
+    "assets/game-basic/fog.webp": "assets/game-basic/fog.webp",
+    "assets/game-basic/fountain.webp": "assets/game-basic/fountain.webp",
+    "assets/game-basic/grindSpark.webp": "assets/game-basic/grindSpark.webp",
+    "assets/game-basic/halo.webp": "assets/game-basic/halo.webp",
+    "assets/game-basic/jetpack-flame.webp": "assets/game-basic/jetpack-flame.webp",
+    "assets/game-basic/jetpack-puff.webp": "assets/game-basic/jetpack-puff.webp",
+    "assets/game-basic/jetpack-puff2.webp": "assets/game-basic/jetpack-puff2.webp",
+    "assets/game-basic/jetpack-trail.webp": "assets/game-basic/jetpack-trail.webp",
+    "assets/game-basic/model-dog.pk": "assets/game-basic/model-dog.pk",
+    "assets/game-basic/model-guard.pk": "assets/game-basic/model-guard.pk",
+    "assets/game-basic/pogo-cloud.webp": "assets/game-basic/pogo-cloud.webp",
+    "assets/game-basic/rainbow.webp": "assets/game-basic/rainbow.webp",
+    "assets/game-basic/reflection.webp": "assets/game-basic/reflection.webp",
+    "assets/game-basic/river.webp": "assets/game-basic/river.webp",
+    "assets/game-basic/river2.webp": "assets/game-basic/river2.webp",
+    "assets/game-basic/shadow.webp": "assets/game-basic/shadow.webp",
+    "assets/game-basic/smoke.webp": "assets/game-basic/smoke.webp",
+    "assets/game-basic/spark.webp": "assets/game-basic/spark.webp",
+    "assets/game-basic/spray-splash.webp": "assets/game-basic/spray-splash.webp",
+    "assets/game-basic/trains_bag.webp": "assets/game-basic/trains_bag.webp",
+    "assets/game-basic/vfx_spark.webp": "assets/game-basic/vfx_spark.webp",
+    "assets/game-basic/waterdrop.webp": "assets/game-basic/waterdrop.webp",
+    "assets/game-basic/waterfall.webp": "assets/game-basic/waterfall.webp",
+    "assets/game-basic/waterspray.webp": "assets/game-basic/waterspray.webp",
+    "assets/game-basic/wave_noise.webp": "assets/game-basic/wave_noise.webp",
+    "assets/game-basic/waves.webp": "assets/game-basic/waves.webp",
+    "assets/game-full/jetpack-flame.pk": "assets/game-full/jetpack-flame.pk",
+    "assets/game-full/props-extra.pk": "assets/game-full/props-extra.pk",
+    "assets/game-full/props.pk": "assets/game-full/props.pk",
+    "assets/game-full/sheep.pk": "assets/game-full/sheep.pk",
+    "assets/game-idle/mystery-box.pk": "assets/game-idle/mystery-box.pk",
+    "assets/game-idle/props-start.pk": "assets/game-idle/props-start.pk",
+    "assets/game-idle/props-tex.webp": "assets/game-idle/props-tex.webp",
+    "assets/game-idle/trains-tex.webp": "assets/game-idle/trains-tex.webp",
+    "assets/preload/splash.webp": "assets/preload/splash.webp",
+    "assets/preload/loading-art.webp": getConfig('images', 'loading_art', "assets/preload/loading-art.webp"),
+    "assets/ui/ui.webp": "assets/ui/ui.webp",
+    "assets/ui/ui.webp.json": "assets/ui/ui.webp.json",
+    "bundles/bali/audio-basic/theme.ogg": "bundles/bali/audio-basic/theme.ogg",
+    "bundles/bali/game-basic/environment-basic.pk": "bundles/bali/game-basic/environment-basic.pk",
+    "bundles/bali/game-basic/trains-basic.pk": "bundles/bali/game-basic/trains-basic.pk",
+    "bundles/bali/game-full/environment-full.pk": "bundles/bali/game-full/environment-full.pk",
+    "bundles/bali/game-full/trains-full.pk": "bundles/bali/game-full/trains-full.pk",
+    "bundles/bali/game-idle/environment-crypt.webp": "bundles/bali/game-idle/environment-crypt.webp",
+    "bundles/bali/game-idle/environment-idle.pk": "bundles/bali/game-idle/environment-idle.pk",
+    "bundles/bali/game-idle/environment-tex@2x.webp": "bundles/bali/game-idle/environment-tex@2x.webp",
+    "bundles/bali/game-idle/train-start.png": "bundles/bali/game-idle/train-start.png",
+    "bundles/bali/game-idle/trains-idle.pk": "bundles/bali/game-idle/trains-idle.pk",
+    "bundles/bali/manifest.json": "bundles/bali/manifest.json",
+  },
+};
+</script>
+<script>window.__archiveConfig={"key": "hollow-run", "platform": "poki", "urls": {}};</script><script>
+/* Hosted build: assets live on Sekai storage under content-addressed names. Requests the game makes by
+   its own relative paths are answered from this table. */
+(function(){
+ var table=window.REMIX.ASSETS;   // filled in the remix block at the top of the page
+ function resolve(url){
+  if(typeof url!=='string')return url;
+  var path=url.split('#')[0].split('?')[0];
+  var hit=/(?:^|\/)((?:assets|bundles)\/.+|asset-sizes\.json)$/.exec(path);
+  if(!hit)return url;
+  var key=hit[1];
+  try{key=decodeURIComponent(key);}catch(error){}
+  return Object.prototype.hasOwnProperty.call(table,key)?table[key]:url;
+ }
+ window.__hollowResolve=resolve;
+ var nativeFetch=window.fetch;
+ window.fetch=function(input,init){
+  if(typeof input==='string')input=resolve(input);
+  else if(window.Request&&input instanceof Request){var mapped=resolve(input.url);if(mapped!==input.url)input=new Request(mapped,input);}
+  return nativeFetch.call(this,input,init);
+ };
+ var nativeOpen=XMLHttpRequest.prototype.open;
+ XMLHttpRequest.prototype.open=function(method,url){var args=Array.prototype.slice.call(arguments);args[1]=resolve(String(url));return nativeOpen.apply(this,args);};
+ var NativeFont=window.FontFace;
+ if(NativeFont){
+  window.FontFace=function(family,source,descriptors){
+   if(typeof source==='string')source=source.replace(/url\((['"]?)([^'")]+)\1\)/g,function(whole,quote,url){return 'url("'+resolve(url)+'")';});
+   return new NativeFont(family,source,descriptors);
+  };
+  window.FontFace.prototype=NativeFont.prototype;
+ }
+ [window.HTMLImageElement,window.HTMLMediaElement,window.HTMLSourceElement].forEach(function(kind){
+  if(!kind)return;
+  var slot=Object.getOwnPropertyDescriptor(kind.prototype,'src');
+  if(!slot||!slot.set)return;
+  Object.defineProperty(kind.prototype,'src',{configurable:true,enumerable:slot.enumerable,get:slot.get,set:function(value){
+   var mapped=resolve(String(value));
+   // Textures drawn to WebGL from another origin must be fetched with CORS.
+   if(mapped!==value&&'crossOrigin' in this&&!this.crossOrigin)this.crossOrigin='anonymous';
+   slot.set.call(this,mapped);
+  }});
+ });
+})();
+</script><script>/* Sekai save. The game keeps its progress in localStorage; here that name points at a store held in
+   memory and kept in the player's Sekai save: read once with get_app_states before the game starts,
+   written back with save_app_states at most every two seconds. Nothing is written to browser storage.
+   Envelope and payloads follow sekai-frontend packages/g3-bridge/asyncapi.yaml. */
+(function () {
+    'use strict';
+    var ORIGIN = 'sekai_gaming_iframe_api';
+    var SLOT = 'save';                 // pageSettings.save = { key: string }
+    var READ_TIMEOUT_MS = 10000;
+    var WRITE_GAP_MS = 2000;
+    var hosted = window.parent !== window;
+    var legacyPrefix = 'archive:' + ((window.__archiveConfig || {}).key || '') + ':';
+
+    var kept = {};                     // what the Sekai save holds
+    var pageSettings = {};             // the host's object, so keys this file does not own are sent back untouched
+    var status = hosted ? 'loading' : 'memory';
+    var lastSent = '';
+    var lastWrite = -WRITE_GAP_MS;
+    var queued = false;
+
+    var browserStore = null;
+
+    function post(type, data, taskId) {
+        window.parent.postMessage({ origin: ORIGIN, type: type, taskId: taskId, data: data }, '*');
+    }
+
+    function flush() {
+        queued = false;
+        if (status !== 'ready') return;
+        var snapshot = JSON.stringify(kept);
+        if (snapshot === lastSent) return;
+        lastSent = snapshot;
+        lastWrite = Date.now();
+        pageSettings[SLOT] = JSON.parse(snapshot);
+        post('save_app_states', { pageSettings: pageSettings }, 'save-' + lastWrite);
+    }
+
+    function changed() {
+        if (status !== 'ready' || queued) return;
+        queued = true;
+        setTimeout(flush, Math.max(0, WRITE_GAP_MS - (Date.now() - lastWrite)));
+    }
+
+    // The same surface as Storage, including property access, over a plain object.
+    function facade(values, onChange) {
+        var methods = {
+            getItem: function (key) { key = String(key); return Object.prototype.hasOwnProperty.call(values, key) ? values[key] : null; },
+            setItem: function (key, value) { key = String(key); value = String(value); if (values[key] === value) return; values[key] = value; onChange(); },
+            removeItem: function (key) { key = String(key); if (!Object.prototype.hasOwnProperty.call(values, key)) return; delete values[key]; onChange(); },
+            clear: function () { var keys = Object.keys(values); keys.forEach(function (key) { delete values[key]; }); if (keys.length) onChange(); },
+            key: function (index) { var keys = Object.keys(values); return index < keys.length ? keys[index] : null; }
+        };
+        return new Proxy({}, {
+            get: function (target, key) { return key === 'length' ? Object.keys(values).length : Object.prototype.hasOwnProperty.call(methods, key) ? methods[key] : typeof key === 'symbol' ? undefined : methods.getItem(key); },
+            set: function (target, key, value) { methods.setItem(key, value); return true; },
+            deleteProperty: function (target, key) { methods.removeItem(key); return true; },
+            has: function (target, key) { return Object.prototype.hasOwnProperty.call(values, key); },
+            ownKeys: function () { return Object.keys(values); },
+            getOwnPropertyDescriptor: function (target, key) { return Object.prototype.hasOwnProperty.call(values, key) ? { configurable: true, enumerable: true, writable: true, value: values[key] } : undefined; }
+        });
+    }
+
+    // Players who started before this change have their progress in the browser. It is read once, when the
+    // Sekai save is still empty, and never written again.
+    function legacyProgress() {
+        return {};
+    }
+
+    function notice(text) {
+        if (!document.body) return;
+        var box = document.createElement('div');
+        box.textContent = text;
+        box.setAttribute('role', 'status');
+        box.style.cssText = 'position:fixed;left:50%;bottom:calc(18px + env(safe-area-inset-bottom));transform:translateX(-50%);z-index:1001;max-width:86vw;padding:9px 14px;border-radius:12px;background:#1b0e30ee;color:#ffe6b0;font:600 13px/1.3 system-ui,sans-serif;text-align:center;pointer-events:none';
+        document.body.appendChild(box);
+        setTimeout(function () { box.remove(); }, 6000);
+    }
+
+    function unavailable(why) {
+        status = 'unavailable';
+        console.warn('[sekai-save] progress will not be saved this visit: ' + why);
+        notice('Progress can’t be saved right now');
+    }
+
+    var ready = new Promise(function (resolve) {
+        if (!hosted) { resolve(); return; }
+        var taskId = 'load-' + Date.now() + '-' + Math.random().toString(36).slice(2, 10);
+        var timedOut = false;
+        window.addEventListener('message', function (event) {
+            var message = event.data;
+            if (event.source !== window.parent || !message || message.origin !== ORIGIN) return;
+            if (message.type !== 'receive_app_states' || message.taskId !== taskId || status === 'ready') return;
+            if (message.error || !message.data) {
+                if (!timedOut) unavailable((message.error && message.error.message) || 'the host returned no save');
+                resolve();
+                return;
+            }
+            var settings = message.data.pageSettings;
+            var stored = settings && settings[SLOT] && typeof settings[SLOT] === 'object' ? settings[SLOT] : {};
+            // The game has already started from nothing: writing now would replace real progress with a fresh save.
+            if (timedOut && Object.keys(stored).length) return;
+            pageSettings = settings && typeof settings === 'object' ? settings : {};
+            lastSent = JSON.stringify(stored);
+            if (!timedOut) {
+                var source = Object.keys(stored).length ? stored : legacyProgress();
+                Object.keys(source).forEach(function (key) { kept[key] = String(source[key]); });
+            }
+            status = 'ready';
+            changed();
+            resolve();
+        });
+        post('get_app_states', null, taskId);
+        setTimeout(function () {
+            if (status !== 'loading') return;
+            timedOut = true;
+            unavailable('the host did not answer in ' + READ_TIMEOUT_MS / 1000 + ' s');
+            resolve();
+        }, READ_TIMEOUT_MS);
+    });
+
+    var local = facade(kept, changed);
+    var session = facade({}, function () {});
+    try {
+        Object.defineProperty(window, 'localStorage', { value: local, configurable: true });
+        Object.defineProperty(window, 'sessionStorage', { value: session, configurable: true });
+    } catch (error) {
+        console.warn('[sekai-save] could not replace browser storage:', error && error.message);
+    }
+
+    // Leaving the page: send what is pending instead of waiting out the throttle.
+    document.addEventListener('visibilitychange', function () { if (document.visibilityState === 'hidden') flush(); });
+    window.addEventListener('pagehide', flush);
+
+    window.__sekaiSave = { ready: ready, status: function () { return status; }, flush: flush };
+})();
+
+/* Hosting compatibility only; source archives stay byte-for-byte unchanged. */
+(()=>{
+ if(window.__archiveRuntime)return; window.__archiveRuntime=true;
+ const config=window.__archiveConfig||{}; const urls=config.urls||{}; let muted=false;
+ const media=new Set(),gains=new Set();
+ const map=value=>{if(typeof value!=='string')return value;if(urls[value])return urls[value];if(value.startsWith('/')&&!value.startsWith('//')&&!value.startsWith(config.prefix||'/local-games/'))return (config.resourceBase||'')+value.slice(1);return value};
+ const report=message=>void 0;
+ window.addEventListener('error',e=>{if(e.message)report(e.message)});
+ window.addEventListener('unhandledrejection',e=>report(e.reason?.message||e.reason));
+ window.addEventListener('securitypolicyviolation',e=>report('External resource blocked: '+e.blockedURI));
+ navigator.sendBeacon=()=>false;
+ const fetchOriginal=window.fetch; window.fetch=function(input,init){return fetchOriginal.call(this,typeof input==='string'?map(input):input,init)};
+ const origXhrOpen=XMLHttpRequest.prototype.open; XMLHttpRequest.prototype.open=function(method,url,...args){return origXhrOpen.apply(this,[method,map(url),...args]);};
+ const play=HTMLMediaElement.prototype.play;HTMLMediaElement.prototype.play=function(){media.add(this);this.muted=muted;return play.call(this)};
+ const connect=window.AudioNode?.prototype.connect;
+ if(connect)AudioNode.prototype.connect=function(destination,...args){
+   if(destination instanceof AudioDestinationNode){const gain=this.context.createGain();gain.gain.value=muted?0:1;gains.add(gain);connect.call(gain,destination);return connect.call(this,gain,...args)}
+   return connect.call(this,destination,...args);
+ };
+ window.addEventListener('message',e=>{if(e.source===parent&&e.origin===location.origin&&e.data?.type==='archive-mute'){muted=!!e.data.muted;media.forEach(m=>m.muted=muted);gains.forEach(g=>g.gain.value=muted?0:1)}});
+ const noop=()=>{}, yes=()=>Promise.resolve(true), done=()=>Promise.resolve();
+ const ad=async(callbacks={})=>{callbacks.adStarted?.();await Promise.resolve();callbacks.adFinished?.();return true};
+ const poki={init:done,setDebug:noop,movePill:noop,measure:noop,gameLoadingStart:noop,gameLoadingProgress:noop,gameLoadingFinished:noop,gameplayStart:noop,gameplayStop:noop,commercialBreak:async cb=>{if(typeof cb==='function')cb()},rewardedBreak:async cb=>{if(typeof cb==='function')cb();return true},happyTime:noop,roundStart:noop,roundEnd:noop,customEvent:noop,getURLParam:p=>new URLSearchParams(location.search).get(p),shareableURL:()=>Promise.resolve(location.href),getLeaderboard:()=>Promise.resolve([])};
+ const memStorage=new Map();
+ const crazy={init:done,environment:'local',game:{gameplayStart:noop,gameplayStop:noop,loadingStart:noop,loadingStop:noop,happytime:noop,inviteLink:()=>location.href,getInviteParam:()=>null},ad:{requestAd:(type,cb)=>ad(cb),hasAdblock:()=>Promise.resolve(false),requestBanner:noop,clearAllBanners:noop},user:{getUser:()=>Promise.resolve(null),isUserAccountAvailable:false},data:{getItem:key=>memStorage.get(config.key+':'+key)||null,setItem:(key,value)=>memStorage.set(config.key+':'+key,String(value)),removeItem:key=>memStorage.delete(config.key+':'+key)},banner:{requestBanner:noop,clearBanner:noop},analytics:{trackEvent:noop}};
+ if(config.platform==='poki')Object.defineProperty(window,'PokiSDK',{get:()=>poki,set:noop,configurable:false});
+ if(config.platform==='crazygames')Object.defineProperty(window,'CrazyGames',{get:()=>({SDK:crazy}),set:noop,configurable:false});
+ if(config.platform==='astrocade'){
+   window.gameConfig=config.gameConfig||{};window.localAssets=config.assets||{};
+   const stateKey='archive:'+config.key+':state';const animationImages=new Map();
+   const boardKey='local-leaderboard';
+   const boardResponse=(limit=10)=>{let score=null;try{const value=memStorage.get(boardKey);if(value!==null&&value!==undefined&&Number.isFinite(Number(value)))score=Number(value)}catch{};const entries=score===null?[]:[{userId:'local-player',playerId:'local-player',id:'local-player',username:'Local Player',name:'Local Player',score,rank:1,isCurrentUser:true}];return{success:true,entries:entries.slice(0,Math.max(1,Math.min(100,Number(limit)||10))),userRank:score===null?null:1,userScore:score,totalPlayers:entries.length,localOnly:true}};
+   const addLocalScore=async(score,limit=10)=>{score=Number(score);if(!Number.isFinite(score))throw new Error('Invalid local leaderboard score');const previous=boardResponse().userScore;memStorage.set(boardKey,String(previous===null?score:Math.max(previous,score)));return boardResponse(limit)};
+   const getState=()=>{try{return JSON.parse(memStorage.get(stateKey))||{}}catch{return {}}};
+   // Animation crop geometry is reused from the existing Rail Rider local preview adapter.
+   async function preloadAnimation(id){const a=window.localAssets[id];if(!a?.animation?.frames?.length)return;if(animationImages.has(id))return animationImages.get(id).promise;const img=new Image();const promise=new Promise((resolve,reject)=>{img.onload=resolve;img.onerror=()=>reject(new Error('Animation load failed: '+id))});animationImages.set(id,{img,promise});img.src=a.url;return promise}
+   window.lib={getAsset:id=>window.localAssets[id],assets:window.localAssets,log:console.log,showGameParameters:noop,editMenu:{open:noop,close:noop},shouldUseTouchControls:()=>matchMedia('(pointer:coarse)').matches,getUserId:()=> 'local-player',getCurrentUserId:()=> 'local-player',getUsername:()=> 'Local Player',getPlayerName:()=> 'Local Player',getUserInfo:()=>({id:'local-player',username:'Local Player'}),getUserGameState:()=>Promise.resolve(getState()),saveUserGameState:value=>{memStorage.set(stateKey,JSON.stringify(value));return done()},deleteUserGameState:()=>{memStorage.delete(stateKey);return done()},getTopNEntriesFromLeaderboard:n=>Promise.resolve(boardResponse(n)),addPlayerScoreToLeaderboard:addLocalScore,llm:()=>Promise.reject(new Error('该游戏需要 Astrocade 在线模型服务，本地档案未包含该服务。')),preloadAnimation,getAnimationPlayer(id){const a=window.localAssets[id],loaded=animationImages.get(id);if(!a?.animation?.frames?.length||!loaded)return null;const frames=a.animation.frames;let index=0,last=0;return{reset(){index=0;last=0},update(now){if(!last){last=now;return}const duration=(frames[index].duration_secs||1/(a.animation.fps||12))*1000;if(now-last>=duration){const steps=Math.floor((now-last)/duration);index=a.animation.loop===false?Math.min(frames.length-1,index+steps):(index+steps)%frames.length;last=now}},getCurrentFrame(){return{...frames[index],index}},draw(ctx,x,y,w,h){const f=frames[index],ow=f.original_width||f.width,oh=f.original_height||f.height;ctx.drawImage(loaded.img,f.x,f.y,f.width,f.height,x+(f.crop_x||0)/ow*w,y+(f.crop_y||0)/oh*h,f.width/ow*w,f.height/oh*h)}}}};
+   document.addEventListener('DOMContentLoaded',()=>{if(typeof window.run==='function')Promise.resolve(window.run('play')).catch(e=>report(e.message||e))},{once:true});
+ }
+ if(config.platform==='ads'){
+   window.mraid=window.mraid||{getState:()=> 'default',isViewable:()=>true,getVersion:()=> '3.0',addEventListener:(name,cb)=>{if(name==='ready')setTimeout(cb,0)},removeEventListener:noop,open:noop,close:noop,getMaxSize:()=>({width:innerWidth,height:innerHeight}),getScreenSize:()=>({width:innerWidth,height:innerHeight})};
+   window.install=window.install||noop;
+ }
+})();
+</script><script>/* SekaiEnding + RemixCue: dependency-free, tap-only, mobile-first ending UI. */
+(function(root){
+ 'use strict';
+ const mounted=new WeakMap();let sequence=0;
+ const css=`
+ .se-ending,.se-ending *{box-sizing:border-box}
+ .se-ending{--se-ink:#243f38;--se-gold:#c9a35e;color:var(--se-ink)!important;background:radial-gradient(ellipse at 50% 0,#fffdf3,#f7f0de 72%)!important;border:1px solid #e0caa0!important;border-radius:28px!important;width:min(380px,calc(100% - 32px))!important;max-width:380px!important;max-height:calc(100% - 32px)!important;overflow:auto;padding:28px!important;font:15px/1.6 system-ui,-apple-system,sans-serif!important;text-align:center;box-shadow:0 22px 70px #081b2660,inset 0 1px 0 #fff!important;isolation:isolate}
+ .se-ending{scrollbar-width:thin;scrollbar-color:#c9ad78 #f4eddb}
+ .se-ending::-webkit-scrollbar{width:4px}
+ .se-ending::-webkit-scrollbar-thumb{background:#c9ad78;border-radius:4px}
+ .se-ending::backdrop{background:#101e2bcc!important}
+ .se-ending[open]{animation:se-arrive .32s ease-out both}
+ .se-ending .se-hero{position:relative;width:80px;height:80px;margin:0 auto 14px;display:grid;place-items:center;border:1px solid #dbc897;border-radius:25px;background:linear-gradient(140deg,#fffdf1,#eadbb7);box-shadow:inset 0 2px 1px #fff,0 8px 18px #94764e15;transform:rotate(-7deg)}
+ .se-hero svg{width:64px;height:64px;transform:rotate(7deg)}
+ .se-ending h1{font:italic 31px/1.15 Georgia,serif!important;letter-spacing:-.7px;color:#294239!important;margin:0 0 14px!important}
+ .se-ending p{margin:10px 0;font-size:14px;line-height:1.65;color:#566354}
+ .se-ending .eyebrow{font-size:9px;letter-spacing:1.8px;color:#957747}
+ .se-ending .se-invite{margin:18px 0 12px!important}
+ .se-ending .se-invite strong{display:block;color:#294239;font-size:17px;letter-spacing:-.3px;margin-bottom:3px}
+ .se-ending button{display:block;width:100%;min-height:50px;padding:12px 18px;margin:11px 0 0!important;border-radius:15px!important;border:1px solid transparent!important;font:700 14px/1.25 system-ui!important;cursor:pointer;touch-action:manipulation}
+ .se-ending button.se-primary{position:relative;isolation:isolate;margin-top:27px!important;color:#fffbee!important;background:linear-gradient(135deg,#4e7e68,#294d43)!important;border-color:#678a69!important;box-shadow:inset 0 1px 0 #a8c6a266,0 7px 18px #31523c26!important;overflow:visible}
+ .se-ending button.se-primary:hover,.se-ending button.se-primary:focus-visible{background:linear-gradient(135deg,#5a8b74,#365f50)!important;color:#fffbee!important}
+ .se-ending button.se-secondary{background:#eee5cf!important;color:#42584b!important;border-color:#dacbaa!important;box-shadow:inset 0 1px 0 #fff6!important}
+ .se-ending button.se-secondary:hover{background:#e6d8b9!important}
+ .se-ending button.se-close{background:transparent!important;color:#6b7565!important;box-shadow:none!important;font-size:12px!important;min-height:44px}
+ .se-ending button:focus-visible{outline:3px solid #c9a35e;outline-offset:4px}
+ .se-ending [role=status]{font-size:12px;color:#526a59;margin:12px 0 0}
+ .se-remix-cue{position:absolute;right:15px;top:-29px;z-index:2;pointer-events:none;font:35px/1 "Apple Color Emoji","Segoe UI Emoji",sans-serif;transform:translateY(-3px) rotate(-8deg);filter:drop-shadow(0 2px 1px #473b2d22)}
+ .se-cue-target{position:relative;isolation:isolate;overflow:visible}
+ .se-cue-target::after{content:"";position:absolute;inset:-4px;border:1.5px solid #d0af6b;border-radius:inherit;pointer-events:none;opacity:.25}
+ dialog[open] .se-remix-cue,.se-cue-visible .se-remix-cue{animation:se-point 1.6s ease-in-out infinite}
+ dialog[open] .se-cue-target::after,.se-cue-visible.se-cue-target::after{animation:se-ring 1.6s ease-in-out infinite}
+ @keyframes se-point{0%,100%{transform:translateY(-3px) rotate(-8deg)}50%{transform:translateY(3px) rotate(-3deg)}}
+ @keyframes se-ring{0%,100%{opacity:.22}50%{opacity:.85}}
+ @keyframes se-arrive{from{opacity:0;transform:translateY(8px) scale(.97)}to{opacity:1;transform:none}}
+ @media(max-height:650px){.se-ending{padding:18px 24px!important}.se-ending .se-hero{width:54px;height:54px;margin-bottom:9px;border-radius:17px}.se-hero svg{width:44px;height:44px}.se-ending h1{font-size:26px!important}.se-ending p{margin:7px 0;font-size:13px}.se-ending .se-invite{margin:10px 0!important}}
+ @media(prefers-reduced-motion:reduce){.se-ending[open],dialog[open] .se-remix-cue,.se-cue-visible .se-remix-cue,dialog[open] .se-cue-target::after,.se-cue-visible.se-cue-target::after{animation:none!important}}
+ `;
+ function install(){if(document.getElementById('sekai-ending-style'))return;const s=document.createElement('style');s.id='sekai-ending-style';s.textContent=css;document.head.appendChild(s);}
+ /** Attach a decorative finger to a button; animation runs only in an open dialog. */
+ function cueAttach(button){install();if(!button)throw new TypeError('RemixCue needs a button');let cue=button.querySelector('.se-remix-cue');if(!cue){cue=document.createElement('span');cue.className='se-remix-cue';cue.setAttribute('aria-hidden','true');cue.innerHTML='<svg width="32" height="32" viewBox="0 0 24 24" fill="#c9a35e" aria-hidden="true"><path d="M11 2v14.17l-4.59-4.58L5 13l7 7 7-7-1.41-1.41L13 16.17V2h-2z"/></svg>';button.appendChild(cue);button.classList.add('se-cue-target');}return {show:()=>button.classList.add('se-cue-visible'),hide:()=>button.classList.remove('se-cue-visible'),destroy:()=>{cue.remove();button.classList.remove('se-cue-target','se-cue-visible');}};}
+ function element(tag,className,text){const node=document.createElement(tag);if(className)node.className=className;if(text!==undefined)node.textContent=text;return node;}
+ const emblem='<svg viewBox="0 0 80 80" fill="none" aria-hidden="true"><path d="M40 13 63 27v26L40 67 17 53V27Z" fill="#3d6a56" stroke="#688a63" stroke-width="2"/><path d="m40 13 23 14-23 13-23-13Z" fill="#6d9872"/><path d="M40 40v27" stroke="#7fa079" stroke-width="2"/><path d="m40 27 3.4 8.6L53 39l-9.6 3.4L40 51l-3.4-8.6L27 39l9.6-3.4Z" fill="#fff2c4"/><path d="m65 12 2 5 5 2-5 2-2 5-2-5-5-2 5-2Z" fill="#c9a35e"/><circle cx="11" cy="59" r="3" fill="#c9a35e"/><circle cx="63" cy="64" r="2" fill="#a8bd8d"/></svg>';
+ /** Enhance an existing ending dialog without replacing its gameplay handlers. */
+ function enhance(dialog,options={}){
+  install();if(!dialog||dialog.tagName!=='DIALOG')throw new TypeError('SekaiEnding needs a dialog');
+  if(mounted.has(dialog))return mounted.get(dialog);
+  dialog.classList.add('se-ending');
+  const hero=element('div','se-hero');hero.setAttribute('aria-hidden','true');hero.innerHTML=emblem;dialog.prepend(hero);
+  const heading=dialog.querySelector('h1');if(heading){if(!heading.id)heading.id='se-ending-title-'+(++sequence);dialog.setAttribute('aria-labelledby',heading.id);}
+  const remix=options.remixButton||dialog.querySelector('#end-remix,#chapter-remix,[data-ending-remix]');
+  const share=options.shareButton||dialog.querySelector('#end-share,#chapter-share,[data-ending-share]');
+  const close=options.closeButton||dialog.querySelector('#end-close,#chapter-continue,[data-ending-close]');
+  let invite=Array.from(dialog.querySelectorAll('p')).find(p=>p.textContent.includes('Create your own Sekai'));
+  if(!invite){invite=element('p');dialog.insertBefore(invite,remix||null);}
+  invite.className='se-invite';invite.replaceChildren(element('strong','',options.invitation||'Remix your game.'),element('span','','Create your own Sekai. Make this world yours.'));
+  const cue=remix?cueAttach(remix):null;
+  if(remix){remix.classList.add('se-primary');if(options.onRemix)remix.onclick=options.onRemix;}
+  if(share){share.classList.add('se-secondary');if(options.onShare)share.onclick=options.onShare;}
+  if(close){close.classList.add('se-close');if(options.onContinue)close.onclick=()=>{dialog.close();options.onContinue();};}
+  const status=dialog.querySelector('[role=status]');
+  const api={dialog,cue,show(){if(!dialog.open)dialog.showModal();},close(){if(dialog.open)dialog.close();},setStatus(text){if(status)status.textContent=String(text);},destroy(){cue?.destroy();dialog.remove();mounted.delete(dialog);}};
+  mounted.set(dialog,api);return api;
+ }
+ /** Create a standalone ending. No host action, navigation or creation occurs until a tap. */
+ function create(options={}){
+  if(typeof options.onRemix!=='function'||typeof options.onShare!=='function')throw new TypeError('SekaiEnding.create requires onRemix and onShare callbacks');
+  const dialog=element('dialog');dialog.id=options.id||'se-ending-'+(++sequence);
+  dialog.append(element('small','eyebrow',options.eyebrow||'CHAPTER COMPLETE'),element('h1','',options.title||'Make it yours.'),element('p','',options.description||'A lovely finish. A new beginning.'),element('p','','Create your own Sekai.'));
+  const remix=element('button','','Remix');remix.dataset.endingRemix='';const share=element('button','','Share');share.dataset.endingShare='';const status=element('p');status.setAttribute('role','status');status.setAttribute('aria-live','polite');const close=element('button','',options.continueLabel||'Keep playing');close.dataset.endingClose='';close.onclick=()=>dialog.close();
+  dialog.append(remix,share,status,close);(options.container||document.body).appendChild(dialog);
+  return enhance(dialog,{...options,remixButton:remix,shareButton:share,closeButton:close});
+ }
+ root.RemixCue={attach:cueAttach};root.SekaiEnding={create,enhance};
+})(window);
+</script><script>/* Tap-only host actions. Remix uses the host's current-game Remix panel. */
+(function(){
+ 'use strict';
+ const status=()=>document.querySelector('dialog[open].se-ending [role="status"]')||document.getElementById('remix-status')||document.getElementById('share-status');
+ const say=text=>{const node=status();if(node)node.textContent=text;};
+ let pending=null,seq=0;
+ function send(type,data){
+  if(window.parent===window){say('Open this game in Sekai and tap Remix to make it your own.');return false;}
+  if(pending)return false;
+  const taskId='remix-action-'+Date.now()+'-'+(++seq);
+  if(type==='invoke_social'){
+   say('Opening this game’s Remix panel…');
+   pending={taskId,timer:setTimeout(()=>{pending=null;say('Remix did not respond. Use the Remix button below the game, or update Sekai.');},8000)};
+  }else say('Share requested. Choose where to share in Sekai.');
+  window.parent.postMessage({origin:'sekai_gaming_iframe_api',type,taskId,data},'*');
+  return true;
+ }
+ window.addEventListener('message',event=>{
+  if(event.source!==window.parent||!pending)return;
+  const message=event.data;
+  if(!message||message.taskId!==pending.taskId||message.type!=='receive_social_action_result')return;
+  clearTimeout(pending.timer);pending=null;
+  say(!message.error&&message.data?.action==='remix'&&message.data?.success===true
+   ? 'Choose Remix in the panel to create your own version.'
+   : 'Remix is unavailable here. Use the Remix button below the game, or update Sekai.');
+ });
+ window.RemixActions={remix:()=>send('invoke_social',{action:'remix'}),share:()=>send('invoke_share',{title:document.title})};
+ function bind(){
+  const remix=document.getElementById('chapter-remix')||document.getElementById('end-remix');
+  const share=document.getElementById('end-share');
+  if(remix){if(window.SekaiEnding)SekaiEnding.enhance(remix.closest('dialog'));remix.onclick=window.RemixActions.remix;}
+  if(share)share.onclick=window.RemixActions.share;
+ }
+ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',bind);else bind();
+})();
+</script><script defer src="assets/js/e4627d25-7ac8-4e7c-88df-38d38c0aaec8.js"></script>
+    <meta charset="UTF-8">
+    
+
+    <meta http-equiv="content-type" content="text/html; charset=UTF8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+
+    <!-- Font faces inlined to avoid Vite publicDir import error -->
+    <style>
+        @font-face {
+            font-family: 'titan-one';
+            src: url('assets/font/titan-one.woff2') format('woff2');
+            font-style: normal;
+            font-stretch: normal;
+        }
+        @font-face {
+            font-family: 'lilita-one';
+            src: url('assets/font/lilita-one.woff2') format('woff2');
+            font-style: normal;
+            font-stretch: normal;
+        }
+        @font-face {
+            font-family: 'stencilia';
+            src: url('assets/font/stencilia.woff2') format('woff2');
+            font-style: normal;
+            font-stretch: normal;
+        }
+    </style>
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="description" content="">
+
+    <title>Hollow Run</title>
+    <style>
+        body, html {
+            margin: 0;
+            width: 100%;
+            height: 100%;
+            background: #0a0514;
+            overflow: hidden;
+        }
+
+        /* The loading screen draws its own logo. */
+        body::before {
+            display: none;
+        }
+
+        .hr-loading {
+            position: fixed;
+            inset: 0;
+            z-index: 999;
+            overflow: hidden;
+            background: linear-gradient(to top, var(--sekai-loading_ground, #4a2c7a) 0%, #2a1650 22%, transparent 52%), radial-gradient(120% 70% at 50% 30%, var(--sekai-loading_sky, #43246f) 0%, #22113c 42%, #0a0514 100%);
+            font: 600 13px/1.4 system-ui, -apple-system, sans-serif;
+            color: #cdbfe6;
+            transition: opacity .45s ease;
+        }
+
+        .hr-loading.hr-leaving {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .hr-stars i {
+            position: absolute;
+            border-radius: 50%;
+            background: #fff6e9;
+            opacity: .25;
+            animation: hr-twinkle 4s ease-in-out infinite;
+        }
+
+        .hr-moon {
+            position: absolute;
+            left: 50%;
+            top: 9%;
+            width: min(46vw, 30vh, 230px);
+            aspect-ratio: 1;
+            transform: translateX(-50%);
+            border-radius: 50%;
+            background: radial-gradient(circle at 38% 36%, #fff8e2 0%, var(--sekai-moon, #ffe6b0) 55%, #f3c877 100%);
+            box-shadow: 0 0 60px 18px #ffcf7a55, 0 0 160px 60px #ff8c1a2e;
+            animation: hr-glow 5s ease-in-out infinite;
+        }
+
+        .hr-moon::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            border-radius: 50%;
+            background: radial-gradient(circle at 30% 62%, #e0b56a66 0 9%, transparent 10%), radial-gradient(circle at 64% 30%, #e0b56a55 0 7%, transparent 8%), radial-gradient(circle at 60% 70%, #e0b56a44 0 5%, transparent 6%);
+        }
+
+        .hr-bat {
+            position: absolute;
+            left: -12%;
+            width: 9%;
+            max-width: 56px;
+            min-width: 30px;
+            fill: #0a0514;
+            animation: hr-fly 11s linear infinite;
+        }
+
+        .hr-bat svg { display: block; width: 100%; animation: hr-flap .32s ease-in-out infinite alternate; }
+        .hr-bat-a { top: 13%; }
+        .hr-bat-b { top: 21%; animation-duration: 15s; animation-delay: -6s; transform: scale(.7); }
+        .hr-bat-c { top: 8%; animation-duration: 19s; animation-delay: -12s; }
+
+        /* Two copies of the graveyard side by side, sliding left by one copy: the world runs past. */
+        .hr-land {
+            position: absolute;
+            left: 0;
+            bottom: 0;
+            display: flex;
+            width: max(200%, 1240px);
+            animation: hr-pass 26s linear infinite;
+        }
+
+        .hr-ground {
+            display: block;
+            flex: 0 0 50%;
+            width: 50%;
+            height: auto;
+        }
+
+        .hr-windows { animation: hr-flicker 3.7s steps(1) infinite; }
+
+        .hr-fog {
+            position: absolute;
+            left: -50%;
+            bottom: 0;
+            width: 200%;
+            height: 26%;
+            background: radial-gradient(60% 100% at 30% 100%, #8f7ac055 0%, transparent 70%), radial-gradient(50% 90% at 72% 100%, #8f7ac044 0%, transparent 70%);
+            animation: hr-drift 16s ease-in-out infinite alternate;
+        }
+
+        .hr-embers i {
+            position: absolute;
+            bottom: -8px;
+            width: 4px;
+            height: 4px;
+            border-radius: 50%;
+            background: #ffb347;
+            box-shadow: 0 0 8px 2px #ff8c1a99;
+            opacity: 0;
+            animation: hr-rise 8s linear infinite;
+        }
+
+        .hr-load {
+            position: absolute;
+            left: 50%;
+            top: 50%;
+            width: min(340px, calc(100% - 56px));
+            transform: translate(-50%, -38%);
+            text-align: center;
+        }
+
+        .hr-logo-box {
+            position: relative;
+            aspect-ratio: 457 / 235;
+            animation: hr-float 4.5s ease-in-out infinite;
+        }
+
+        .hr-logo-box::before {
+            content: '';
+            position: absolute;
+            inset: 8% -6%;
+            border-radius: 50%;
+            background: radial-gradient(closest-side, #ff8c1a44, transparent);
+            animation: hr-pulse 3.2s ease-in-out infinite;
+        }
+
+        /* Shown until the logo image has arrived, so the title is never blank. */
+        .hr-logo-text {
+            position: absolute;
+            inset: 0;
+            display: grid;
+            place-items: center;
+            font: 900 clamp(34px, 12vw, 54px)/0.95 'titan-one', Georgia, serif;
+            letter-spacing: .04em;
+            color: #ffc46b;
+            text-shadow: 0 3px 0 #1b0e30, 0 0 22px #ff8c1a88;
+        }
+
+        .hr-logo {
+            position: absolute;
+            inset: 0;
+            display: block;
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            filter: drop-shadow(0 8px 18px #0a0514aa);
+        }
+
+        /* The chase: rails with sleepers sliding by, candy along them, the witch ahead of the ghost. */
+        .hr-track {
+            position: relative;
+            margin: 96px 22px 0 6px;
+            height: 12px;
+        }
+
+        .hr-rail {
+            height: 100%;
+            border-radius: 3px;
+            border-block: 2px solid #8a76b8;
+            background: repeating-linear-gradient(90deg, #5a438099 0 5px, transparent 5px 18px) #120a1f;
+            overflow: hidden;
+            box-shadow: 0 10px 18px -6px #0a0514, 0 0 22px #ff8c1a33;
+            animation: hr-sleepers .42s linear infinite;
+        }
+
+        .hr-rail i {
+            display: block;
+            height: 100%;
+            transform-origin: left;
+            transform: scaleX(0);
+            background: linear-gradient(90deg, #d9600a00, var(--sekai-accent, #ffb347));
+            transition: transform .25s linear;
+        }
+
+        .hr-candies u {
+            position: absolute;
+            top: -18px;
+            width: 10px;
+            height: 10px;
+            margin-left: -4px;
+            border-radius: 50%;
+            box-shadow: 0 0 8px currentColor, inset -2px -2px 0 #0003;
+            animation: hr-bob 1.6s ease-in-out infinite;
+            transition: transform .3s ease-out, opacity .3s ease-out;
+        }
+
+        .hr-candies u:nth-child(even) { animation-delay: -.8s; }
+        .hr-candies u.got { transform: translateY(-22px) scale(1.9); opacity: 0; }
+
+        .hr-runner {
+            position: absolute;
+            left: 0;
+            bottom: 0;
+            transition: left .25s linear;
+        }
+
+        .hr-hero {
+            position: absolute;
+            left: -34px;
+            bottom: 1px;
+            width: 64px;
+            filter: drop-shadow(0 0 7px #ffb34777);
+            animation: hr-stride .3s ease-in-out infinite alternate;
+        }
+
+        .hr-hero.hr-jump { animation: hr-jump .55s cubic-bezier(.3, 0, .5, 1); }
+        .hr-hero.hr-jump .hr-swing-a, .hr-hero.hr-jump .hr-swing-b { animation-play-state: paused; }
+
+        .hr-sock { fill: none; stroke: #fff6e9; stroke-width: 5.4; stroke-linecap: round; }
+        .hr-stripe { fill: none; stroke: #1b0e30; stroke-width: 5.4; stroke-dasharray: 2.6 2.6; stroke-dashoffset: -1.5; }
+        .hr-arm .hr-sock { stroke: #f58a1c; stroke-width: 4.6; }
+        .hr-arm .hr-stripe { stroke-width: 4.6; }
+        .hr-leg > *, .hr-arm > * { transform-box: view-box; transform-origin: 0 0; }
+        .hr-swing-a > * { animation: hr-swing .3s ease-in-out infinite alternate; }
+        .hr-swing-b > * { animation: hr-swing .3s ease-in-out infinite alternate-reverse; }
+        .hr-face { animation: hr-ember-face 1.4s ease-in-out infinite alternate; }
+
+        .hr-ghost {
+            position: absolute;
+            left: -82px;
+            bottom: 30px;
+            width: 36px;
+            animation: hr-bob 1.1s ease-in-out infinite;
+            filter: drop-shadow(0 0 8px #fff6e988);
+            opacity: .92;
+        }
+
+        .hr-goal {
+            position: absolute;
+            right: -26px;
+            top: -26px;
+            width: 36px;
+            animation: hr-glow 2.2s ease-in-out infinite;
+            filter: drop-shadow(0 0 10px #ff8c1acc);
+        }
+
+        .hr-ghost svg, .hr-goal svg, .hr-hero svg { display: block; width: 100%; overflow: visible; }
+
+        .hr-load b {
+            display: block;
+            margin-top: 16px;
+            font: 400 26px/1 'titan-one', Georgia, serif;
+            letter-spacing: .06em;
+            color: var(--sekai-accent, #ffb347);
+            text-shadow: 0 2px 0 #0a0514;
+        }
+
+        .hr-load span {
+            display: block;
+            margin-top: 10px;
+            min-height: 2.8em;
+            opacity: 0;
+            transition: opacity .25s ease;
+            text-shadow: 0 1px 2px #0a0514;
+        }
+
+        .hr-load span.on { opacity: 1; }
+
+        @keyframes hr-twinkle { 50% { opacity: .95; } }
+        @keyframes hr-glow { 50% { filter: brightness(1.12) drop-shadow(0 0 14px #ffb347cc); } }
+        @keyframes hr-fly { to { left: 112%; } }
+        @keyframes hr-flap { from { transform: scaleY(1); } to { transform: scaleY(.45); } }
+        @keyframes hr-flicker { 0%, 100% { opacity: 1; } 42% { opacity: .55; } 46% { opacity: 1; } 71% { opacity: .7; } 74% { opacity: 1; } }
+        @keyframes hr-drift { to { transform: translateX(22%); } }
+        @keyframes hr-float { 50% { transform: translateY(-7px); } }
+        @keyframes hr-pass { to { transform: translateX(-50%); } }
+        @keyframes hr-rise { 10% { opacity: .9; } 80% { opacity: .5; } 100% { transform: translate(26px, -70vh); opacity: 0; } }
+        @keyframes hr-pulse { 50% { transform: scale(1.12); opacity: .6; } }
+        @keyframes hr-sleepers { to { background-position-x: -18px; } }
+        @keyframes hr-stride { to { transform: translateY(-3px) rotate(3deg); } }
+        @keyframes hr-swing { from { transform: rotate(-38deg); } to { transform: rotate(38deg); } }
+        @keyframes hr-jump { 45% { transform: translateY(-52px) rotate(-8deg); } 100% { transform: none; } }
+        @keyframes hr-ember-face { to { fill: #fff3b0; } }
+        @keyframes hr-bob { 50% { transform: translateY(-6px) rotate(4deg); } }
+
+        @media (max-height: 520px) {
+            .hr-moon { top: 4%; width: min(26vh, 150px); }
+            .hr-load { width: min(300px, 46vw); transform: translate(-50%, -46%); }
+            .hr-track { margin-top: 70px; }
+            .hr-hero { width: 50px; left: -27px; }
+            .hr-load b { margin-top: 8px; font-size: 20px; }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            .hr-loading *, .hr-loading { animation: none !important; transition: none !important; }
+        }
+
+        /* The rule below is closed by the declaration that followed the old background colour. */
+        #message {
+            display: none;
+            overflow: hidden;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            width: min(457px, calc(100% - 32px));
+            aspect-ratio: 457 / 235;
+            left: 50%;
+            transform: translateX(-50%);
+            bottom: calc(50% - 117.5px);
+            background-image: url('assets/preload/splash.webp');
+            background-size: contain;
+            background-repeat: no-repeat;
+            pointer-events: none;
+        }
+
+        #message {
+            text-align: center;
+            font-size: 8px;
+            z-index: 5;
+            font-family: "Verdana", sans-serif;
+            color: #fff;
+            position: fixed;
+            width: 100%;
+            z-index: 9999;
+        }
+
+        .dot {
+            display: inline;
+            margin-left: 0.2em;
+            margin-right: 0.2em;
+            position: relative;
+            top: -1em;
+            font-size: 3.5em;
+            opacity: 0;
+            animation: showHideDot 2.5s ease-in-out infinite;
+        }
+
+        .dot.one { animation-delay: 0.2s; }
+        .dot.two { animation-delay: 0.4s; }
+        .dot.three { animation-delay: 0.6s; }
+
+        @keyframes showHideDot {
+            0% { opacity: 0; }
+            50% { opacity: 1; }
+            60% { opacity: 1; }
+            100% { opacity: 0; }
+        }
+
+    </style>
+  <link rel="modulepreload" href="assets/js/49ab3daf-9531-4f6d-8cf1-512c82a7a223.js">
+  <script type="module" src="assets/js/49ab3daf-9531-4f6d-8cf1-512c82a7a223.js"></script>
+  <link rel="modulepreload" href="assets/js/c7fd994c-1d96-4ea6-bbba-02ad8fe3095b.js">
+  <link rel="modulepreload" href="assets/js/34d384e6-a8cb-4bb4-af6d-057230a7104e.js">
+  <link rel="modulepreload" href="assets/js/a55c2f45-f795-4428-98af-cfe2bf41899f.js">
+  <link rel="modulepreload" href="assets/js/6fdbcda5-656d-48b4-87bc-55072b211db8.js">
+  <link rel="modulepreload" href="assets/js/7a30d6e8-e936-4fb4-ae22-8578e623acd7.js">
+  <link rel="modulepreload" href="assets/js/2102e62f-113e-4376-b970-75e3895dbc5e.js">
+  <link rel="modulepreload" href="assets/js/1c60036c-7b2e-46c9-9db0-8fe401515798.js">
+  <link rel="modulepreload" href="assets/js/d0a49ebf-818c-4b12-93c2-620eb9c079e5.js">
+<style id="hr-loading-art-style">
+/* Loading art: the picture fills the screen; the rail, percentage and tips sit on its calm bottom. */
+.hr-loading.hr-art{background:linear-gradient(to top,#0a0514eb 0,#0a05148f 17%,#0a051400 36%),var(--hr-art) center top/cover no-repeat,#171328}
+.hr-loading.hr-art .hr-stars,.hr-loading.hr-art .hr-moon,.hr-loading.hr-art .hr-bat,.hr-loading.hr-art .hr-land,.hr-loading.hr-art .hr-logo-box{display:none}
+.hr-loading.hr-art .hr-fog{opacity:.6}
+.hr-loading.hr-art .hr-load{top:auto;bottom:max(26px,calc(env(safe-area-inset-bottom,0px) + 14px));transform:translateX(-50%);z-index:1}
+.hr-loading.hr-art .hr-load span{color:#e3d8f5;text-shadow:0 1px 3px #0a0514}
+@media (min-aspect-ratio:3/4){.hr-loading.hr-art{background:linear-gradient(to top,#0a0514eb 0,#0a05148f 17%,#0a051400 36%),var(--hr-art) center top/auto 100% no-repeat,#171328}}
+</style></head>
+<body>
+<script>/* Hollow Run loading screen: the game's own chase, played out while it arrives. The pumpkin witch runs
+   the rails across a scrolling moonlit graveyard with the ghost on her heels, picking up candy as the
+   load advances, until she reaches the jack-o'-lantern. Bats cross the moon, windows flicker, embers
+   rise, the tips change, and a tap makes her jump. Same interface as the bar it replaces (show, hide, setTotal, setProgress,
+   completePreInit, setInitialProgress), so the game keeps driving it with real progress. */
+//#region @sekai:loading-scene · initialize animated loading presentation
+function LoadingBar()
+{
+    var TIPS = window.REMIX.TEXT.tips;                      // words and candy colours: see the remix block
+    var BAT = '<svg viewBox="0 0 48 24" aria-hidden="true"><path d="M24 9c2-4 4-4 5-1 5-6 12-6 19-2-5 0-8 2-9 6-3-2-6-2-8 1-2-2-4 1-7 8-3-7-5-10-7-8-2-3-5-3-8-1-1-4-4-6-9-6 7-4 14-4 19 2 1-3 3-3 5 1z"/></svg>';
+    var GHOST = '<svg viewBox="0 0 40 46" aria-hidden="true"><path d="M20 2c10 0 16 8 16 18v22l-5-4-5 5-6-5-6 5-5-5-5 4V20C4 10 10 2 20 2z" fill="#fff6e9" stroke="#1b0e30" stroke-width="2"/><ellipse cx="14" cy="19" rx="3" ry="4.5" fill="#1b0e30"/><ellipse cx="26" cy="19" rx="3" ry="4.5" fill="#1b0e30"/><ellipse cx="20" cy="29" rx="3.5" ry="4.5" fill="#1b0e30"/></svg>';
+    var PUMPKIN = '<svg viewBox="0 0 44 40" aria-hidden="true"><rect x="20" y="1" width="4" height="8" rx="1" fill="#4f6b1f"/><ellipse cx="13" cy="23" rx="11" ry="15" fill="#e2700f"/><ellipse cx="31" cy="23" rx="11" ry="15" fill="#e2700f"/><ellipse cx="22" cy="23" rx="12" ry="16" fill="#f58a1c"/><path d="M11 18l7-3-2 7zM33 18l-7-3 2 7zM10 26l5 3 4-3 3 3 3-3 4 3 5-3-4 8-5-2-3 2-3-2-5 2z" fill="#ffe873"/></svg>';
+    var LIMB = '<path class="hr-sock" d="M0 0v15"/><path class="hr-stripe" d="M0 0v15"/>';
+    var WITCH = '<svg viewBox="0 0 64 90" aria-hidden="true">'
+        + '<g class="hr-leg hr-swing-b" transform="translate(29 62)">' + LIMB + '<ellipse cx="3" cy="17" rx="6" ry="3.4" fill="#3b2166"/></g>'
+        + '<g class="hr-arm hr-swing-a" transform="translate(30 47)">' + LIMB + '<circle cy="16" r="3.6" fill="#9bdc4a"/></g>'
+        + '<path d="M23 43h18l7 21-5-3-4 3-4-3-4 3-4-3-5 3z" fill="#6a36a8" stroke="#1b0e30" stroke-width="1.5" stroke-linejoin="round"/>'
+        + '<path d="M19 61l5-3 4 3 4-3 4 3 4-3 5 3" fill="none" stroke="#f58a1c" stroke-width="2.4" stroke-linejoin="round"/>'
+        + '<rect x="34" y="50" width="6" height="5" fill="#8c5bd0" stroke="#1b0e30" stroke-width=".8" stroke-dasharray="1.4 1"/>'
+        + '<g class="hr-leg hr-swing-a" transform="translate(35 62)">' + LIMB + '<ellipse cx="3" cy="17" rx="6" ry="3.4" fill="#4b2a7a"/></g>'
+        + '<g class="hr-head"><circle cx="32" cy="32" r="13.5" fill="#f58a1c" stroke="#1b0e30" stroke-width="1.5"/>'
+        + '<path d="M29 19c-6 7-6 19 0 26M36 19c6 7 6 19 0 26" fill="none" stroke="#d9600a" stroke-width="1.4"/>'
+        + '<path class="hr-face" d="M35 28l7-3-1 7zM27 29l5-2v5zM27 37l3 2 3-2 3 2 5-3-2 7-4-2-3 2-3-2z" fill="#ffe873"/>'
+        + '<path d="M19 24Q23 6 9 2q25-3 36 19z" fill="#3b2166" stroke="#1b0e30" stroke-width="1.5" stroke-linejoin="round"/>'
+        + '<path d="M20 19q12-6 23-1l2 3q-13-4-26 3z" fill="#f58a1c"/>'
+        + '<ellipse cx="32" cy="23.5" rx="20" ry="4.4" transform="rotate(-5 32 23.5)" fill="#4b2a7a" stroke="#1b0e30" stroke-width="1.5"/></g>'
+        + '<g class="hr-arm hr-swing-b" transform="translate(34 47)">' + LIMB + '<circle cy="16" r="3.6" fill="#b4ee5c"/></g>'
+        + '</svg>';
+    var CANDY_COLOURS = window.REMIX.COLOURS.loadingCandy;
+    var RUN_FROM = 0.12, RUN_SPAN = 0.8;   // the runner's share of the track, so the ghost behind her stays on screen
+    var SCENE = '<svg class="hr-ground" viewBox="0 0 800 300" preserveAspectRatio="xMidYMax meet" aria-hidden="true">'
+        + '<path d="M0 210c120-60 230-70 330-30 90-50 220-60 470 30v90H0z" fill="#1c0f33"/>'
+        + '<g fill="#0a0514"><path d="M560 190v-70l-12 0 42-46 42 46-12 0v70z"/><path d="M604 96v-34h12v46z"/>'
+        + '<path d="M150 232c-4-40 2-70 0-104-14-8-24-22-30-40 14 10 22 16 30 18-2-18-10-30-22-40 18 4 26 14 30 26 6-22 16-34 34-40-10 12-16 26-18 46 10-8 20-12 34-12-12 8-22 18-32 34 0 40-4 76 2 112z"/>'
+        + '<path d="M0 232c160-34 330-40 800 0v68H0z"/>'
+        + '<path d="M250 236v-34a14 14 0 0 1 28 0v34zM330 240v-26h-8v-8h8v-10h8v10h8v8h-8v26zM420 238v-30a12 12 0 0 1 24 0v30zM690 232v-36a15 15 0 0 1 30 0v36z"/>'
+        + '<path d="M20 240v-34l5-8 5 8v34zM46 240v-34l5-8 5 8v34zM72 240v-34l5-8 5 8v34zM98 240v-34l5-8 5 8v34zM14 216h100v5H14z"/></g>'
+        + '<g class="hr-windows" fill="#ffb347"><rect x="572" y="140" width="12" height="16"/><rect x="598" y="140" width="12" height="16"/><rect x="585" y="108" width="10" height="12"/></g>'
+        + '</svg>';
+
+    var showing = false;
+    var preInitActive = true;
+    var preInitStartedAt = 0;
+    var preInitFrame = 0;
+    var tipTimer = 0;
+    var tipIndex = Math.floor(Math.random() * TIPS.length);
+
+    var container = document.createElement('div');
+    container.className = 'hr-loading';
+    // Loading art: the address is in the remix block (REMIX.ASSETS). If the picture cannot load, the
+    // drawn night scene comes back.
+    // // sekai-slot: images:loading_art desc="Picture behind the loading bar"
+    var artUrl = window.getConfig('images', 'loading_art', (window.REMIX && window.REMIX.ASSETS || {})['assets/preload/loading-art.webp']);
+    if (artUrl)
+    {
+        container.classList.add('hr-art');
+        container.style.setProperty('--hr-art', 'url("' + String(artUrl).replace(/"/g, '%22') + '")');
+        var artProbe = new Image();
+        artProbe.onerror = function () { container.classList.remove('hr-art'); };
+        artProbe.src = artUrl;
+    }
+    container.setAttribute('role', 'progressbar');
+    container.setAttribute('aria-label', window.REMIX.TEXT.loading);
+    var stars = '';
+    for (var i = 0; i < 46; i++)
+    {
+        // Fixed pseudo-random scatter so the sky is the same on every visit.
+        var x = (i * 61.8) % 100, y = (i * 37.3) % 62, size = 1 + (i % 3);
+        stars += '<i style="left:' + x.toFixed(1) + '%;top:' + y.toFixed(1) + '%;width:' + size + 'px;height:' + size + 'px;animation-delay:' + ((i * 0.37) % 4).toFixed(2) + 's"></i>';
+    }
+    var candies = '', embers = '';
+    for (var c = 0; c < CANDY_COLOURS.length; c++)
+    {
+        candies += '<u style="left:' + (20 + c * 62.5 / Math.max(1, CANDY_COLOURS.length - 1)) + '%;background:' + CANDY_COLOURS[c] + '"></u>';
+    }
+    for (var e = 0; e < 9; e++)
+    {
+        embers += '<i style="left:' + ((e * 23.7 + 9) % 100).toFixed(1) + '%;animation-delay:-' + (e * 1.3).toFixed(1) + 's;animation-duration:' + (7 + (e % 4) * 1.5) + 's"></i>';
+    }
+    container.innerHTML = '<div class="hr-stars">' + stars + '</div><div class="hr-moon"></div>'
+        + '<div class="hr-bat hr-bat-a">' + BAT + '</div><div class="hr-bat hr-bat-b">' + BAT + '</div><div class="hr-bat hr-bat-c">' + BAT + '</div>'
+        + '<div class="hr-land">' + SCENE + SCENE + '</div><div class="hr-fog"></div><div class="hr-embers">' + embers + '</div>'
+        + '<div class="hr-load"><div class="hr-logo-box"><div class="hr-logo-text">HOLLOW<br>RUN</div><img class="hr-logo" alt="" src="assets/preload/splash.webp"></div>'
+        + '<div class="hr-track"><div class="hr-rail"><i></i></div><div class="hr-candies">' + candies + '</div>'
+        + '<div class="hr-runner"><div class="hr-ghost">' + GHOST + '</div><div class="hr-hero">' + WITCH + '</div></div>'
+        + '<div class="hr-goal">' + PUMPKIN + '</div></div>'
+        + '<b></b><span></span></div>';
+    container.insertAdjacentHTML('beforeend', '<img class="hr-art-image" data-sekai-slot="images:loading_art" alt="">');
+    var artImage = container.querySelector('.hr-art-image');
+    artImage.addEventListener('error', function () { container.classList.remove('hr-art'); });
+    //#region @sekai:loading-input · handle loading interactions and copy
+    var bar = container.querySelector('.hr-rail i');
+    var runner = container.querySelector('.hr-runner');
+    var hero = container.querySelector('.hr-hero');
+    var treats = container.querySelectorAll('.hr-candies u');
+    // A tap makes her jump: something to do while the game arrives.
+    container.addEventListener('pointerdown', function () { hero.classList.add('hr-jump'); });
+    hero.addEventListener('animationend', function (event) { if (event.animationName === 'hr-jump') hero.classList.remove('hr-jump'); });
+    var label = container.querySelector('.hr-load b');
+    var tip = container.querySelector('.hr-load span');
+    var logo = container.querySelector('.hr-logo');
+    var logoText = container.querySelector('.hr-logo-text');
+    logo.style.visibility = 'hidden';
+    logo.onload = function () { logo.style.visibility = ''; logoText.style.visibility = 'hidden'; };
+
+    function nextTip()
+    {
+        tipIndex = (tipIndex + 1) % TIPS.length;
+        tip.classList.remove('on');
+        setTimeout(function () { tip.textContent = TIPS[tipIndex]; tip.classList.add('on'); }, 260);
+    }
+
+    //#endregion @sekai:loading-input
+    function show()
+    {
+        if (showing) return;
+        showing = true;
+        container.classList.remove('hr-leaving');
+        document.body.appendChild(container);
+        document.documentElement.classList.add('hr-is-loading');
+        tip.textContent = TIPS[tipIndex];
+        tip.classList.add('on');
+        tipTimer = setInterval(nextTip, 3200);
+        setProgress(0);
+
+        if (preInitActive)
+        {
+            preInitStartedAt = performance.now();
+            preInitFrame = requestAnimationFrame(updatePreInitProgress);
+        }
+    }
+
+    // The game asks for the screen to go as soon as its data is in, which on a phone is seconds before
+    // anything is drawn. The screen stays until the scene has actually rendered (remix.js sets
+    // __hollowReady after a few frames), with a time limit so a failed start can still show its message.
+    var HOLD_LIMIT_MS = 8000;
+    var holdTimer = 0;
+    function hide()
+    {
+        if (!showing || holdTimer) return;
+        var asked = performance.now();
+        renderProgress(1);
+        holdTimer = setInterval(function () {
+            if (!window.__hollowReady && performance.now() - asked < HOLD_LIMIT_MS) return;
+            clearInterval(holdTimer);
+            holdTimer = 0;
+            leave();
+        }, 60);
+    }
+
+    function leave()
+    {
+        if (!showing) return;
+        showing = false;
+        clearInterval(tipTimer);
+        cancelAnimationFrame(preInitFrame);
+        document.documentElement.classList.remove('hr-is-loading');
+        // Fade out over the game instead of cutting to it.
+        container.classList.add('hr-leaving');
+        setTimeout(function () { if (!showing) container.remove(); }, 450);
+    }
+
+    //#region @sekai:loading-progress · update and animate loading progress
+    function renderProgress(ratio)
+    {
+        if (ratio < 0) ratio = 0;
+        if (ratio > 1) ratio = 1;
+        var percent = Math.round(ratio * 100);
+
+        var at = RUN_FROM + ratio * RUN_SPAN;
+        bar.style.transform = 'scaleX(' + at + ')';
+        runner.style.left = (at * 100) + '%';
+        for (var i = 0; i < treats.length; i++) treats[i].classList.toggle('got', parseFloat(treats[i].style.left) <= at * 100);
+        label.textContent = percent + '%';
+        container.setAttribute('aria-valuenow', percent);
+    }
+
+    // Before the game code has arrived there is nothing to measure, so the bar eases towards the halfway mark.
+    function updatePreInitProgress(now)
+    {
+        if (!showing || !preInitActive) return;
+        renderProgress(0.49 * (1 - Math.exp(-(now - preInitStartedAt) / 1600)));
+        preInitFrame = requestAnimationFrame(updatePreInitProgress);
+    }
+
+    function completePreInit()
+    {
+        if (!preInitActive) return;
+        preInitActive = false;
+        cancelAnimationFrame(preInitFrame);
+        renderProgress(0.5);
+    }
+
+    function setInitialProgress(ratio)
+    {
+        completePreInit();
+        if (ratio < 0) ratio = 0;
+        if (ratio > 1) ratio = 1;
+        renderProgress(0.5 + (ratio * 0.5));
+    }
+
+    function setProgress(ratio)
+    {
+        renderProgress(ratio);
+    }
+    //#endregion @sekai:loading-progress
+
+    show();
+    this.show = show;
+    this.hide = hide;
+    this.setTotal = function () {};
+    this.setProgress = setProgress;
+    this.completePreInit = completePreInit;
+    this.setInitialProgress = setInitialProgress;
+}
+//#endregion @sekai:loading-scene
+
+window.loadingBar = new LoadingBar();
+</script>
+    <script>
+        window.NOSW = true;
+        window.GAME_CONFIG = {
+            pokiSdkDebug: false,
+            leaderboard: 'mockup',
+            bundlesPath: './bundles',
+        }
+        // Capture console for debugging
+        window._logs = [];
+        const _origWarn = console.warn;
+        const _origError = console.error;
+        const _origLog = console.log;
+        console.warn = function() { window._logs.push({t:'W', m: Array.from(arguments).map(String).join(' ')}); _origWarn.apply(console, arguments); };
+        console.error = function() { window._logs.push({t:'E', m: Array.from(arguments).map(String).join(' ')}); _origError.apply(console, arguments); };
+        console.log = function() { window._logs.push({t:'L', m: Array.from(arguments).map(String).join(' ')}); _origLog.apply(console, arguments); };
+        window.addEventListener('error', e => window._logs.push({t:'X', m: e.message + ' @ ' + e.filename + ':' + e.lineno}));
+        window.addEventListener('unhandledrejection', e => window._logs.push({t:'P', m: (e.reason?.message || String(e.reason))}));
+    </script>
+    <div id="message">
+        <h1>Loading</h1>
+        <h1 class="dot one">.</h1><h1 class="dot two">.</h1><h1 class="dot three">.</h1>
+    </div>
+    <script id="language-picker-code">
+    //#region @sekai:language · locale selection and language menu
+    (()=>{
+      const labels={en:'English','zh-CN':'简体中文','zh-TW':'繁體中文',ja:'日本語'};
+      let lang='zh-TW';
+      try{const saved=window.__sekaiGameSave&&window.__sekaiGameSave.getItem('hollow-run-language');if(saved&&labels[saved])lang=saved;}catch(e){}
+      const mount=()=>{
+        if(document.getElementById('language-picker'))return;
+        const wrap=document.createElement('div');wrap.id='language-picker';wrap.setAttribute('data-spec-id','language-picker');
+        const toggle=document.createElement('button');toggle.id='language-toggle';toggle.type='button';toggle.setAttribute('data-spec-id','language-toggle');toggle.textContent=labels[lang];toggle.setAttribute('aria-label',lang==='zh-CN'?'语言':lang==='zh-TW'?'語言':lang==='ja'?'言語':'Language');toggle.setAttribute('aria-expanded','false');
+        const menu=document.createElement('div');menu.id='language-options';menu.setAttribute('role','menu');menu.hidden=true;
+        const dictionary={
+          en:{loading:'Loading Hollow Run',hint:'Swipe to dodge the coffins',settings:'Settings',start:'Start',sourceBtn:'</> Source',sourceTitle:'Source Code',copyBtn:'Copy',copied:'Copied!',closeBtn:'Close',toastCopied:'Source code copied to clipboard'},
+          'zh-CN':{loading:'正在加载 Hollow Run',hint:'滑动躲避棺材',settings:'设置',start:'开始',sourceBtn:'</> 源代码',sourceTitle:'完整源代码',copyBtn:'复制',copied:'已复制！',closeBtn:'返回',toastCopied:'已复制完整源代码到剪贴簿'},
+          'zh-TW':{loading:'正在載入 Hollow Run',hint:'滑動閃避棺材',settings:'設定',start:'開始',sourceBtn:'</> 原始碼',sourceTitle:'完整原始碼',copyBtn:'複製',copied:'已複製！',closeBtn:'返回',toastCopied:'已複製完整原始碼至剪貼簿'},
+          ja:{loading:'Hollow Run を読み込み中',hint:'スワイプして棺をよけよう',settings:'設定',start:'スタート',sourceBtn:'</> ソース',sourceTitle:'ソースコード',copyBtn:'コピー',copied:'コピー完了！',closeBtn:'閉じる',toastCopied:'ソースコードをクリップボードにコピーしました'}
+        };
+        const applyLanguage=()=>{
+          document.documentElement.lang=lang;
+          document.querySelectorAll('.hr-loading .hr-load span').forEach(el=>el.textContent=dictionary[lang].hint);
+          const loading=document.querySelector('.hr-loading');if(loading)loading.setAttribute('aria-label',dictionary[lang].loading);
+          document.querySelectorAll('[data-language-copy]').forEach(el=>{const copy=JSON.parse(el.dataset.languageCopy);el.textContent=copy[lang];});
+          document.querySelectorAll('[data-language-aria]').forEach(el=>{const copy=JSON.parse(el.dataset.languageAria);el.setAttribute('aria-label',copy[lang]);});
+          document.querySelectorAll('[data-i18n-key]').forEach(el=>{const value=dictionary[lang][el.dataset.i18nKey];if(value)el.textContent=value;});
+          const toast=document.getElementById('source-toast');
+          if(toast&&dictionary[lang].toastCopied)toast.dataset.msg=dictionary[lang].toastCopied;
+          const copyBtn=document.getElementById('source-copy-btn');
+          if(copyBtn&&dictionary[lang].copied)copyBtn.dataset.copiedText=dictionary[lang].copied;
+        };
+        for(const code of ['zh-CN','zh-TW','en','ja']){const item=document.createElement('button');item.type='button';item.dataset.locale=code;item.textContent=labels[code];item.setAttribute('role','menuitemradio');item.setAttribute('aria-checked',String(code===lang));item.addEventListener('click',()=>{lang=code;toggle.textContent=labels[lang];menu.querySelectorAll('[data-locale]').forEach(option=>option.setAttribute('aria-checked',String(option.dataset.locale===lang)));menu.hidden=true;toggle.setAttribute('aria-expanded','false');applyLanguage();});menu.appendChild(item);}
+        applyLanguage();
+        toggle.addEventListener('click',()=>{menu.hidden=!menu.hidden;toggle.setAttribute('aria-expanded',String(!menu.hidden));});wrap.append(toggle,menu);document.body.appendChild(wrap);
+      };
+      if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',mount,{once:true});else mount();
+    })();
+    //#endregion @sekai:language
+    </script>
+    <style>
+    #language-picker{position:fixed;z-index:1000;top:max(12px,env(safe-area-inset-top));right:12px;font:600 14px/1.25 system-ui,sans-serif}
+    #language-picker button{display:block;min-height:44px;padding:9px 14px;border:1px solid #9b80bb;border-radius:13px;background:#241536;color:#fff;font:inherit;text-align:left;box-shadow:0 5px 18px #0005;touch-action:manipulation;cursor:pointer}
+    #language-picker button:active{transform:scale(.95);opacity:.85}
+    #language-options{position:absolute;top:calc(100% + 7px);right:0;min-width:150px;padding:8px;border:1px solid #9b80bb;border-radius:15px;background:#201237;box-shadow:0 12px 32px #0008}
+    #language-options[hidden]{display:none}
+    #language-options button{width:100%;margin:3px 0;background:#36204f}
+
+    #source-widget{position:fixed;z-index:1000;top:max(12px,env(safe-area-inset-top));left:12px;font:600 14px/1.25 system-ui,sans-serif}
+    #source-widget button{display:flex;align-items:center;gap:6px;min-height:44px;padding:9px 14px;border:1px solid #9b80bb;border-radius:13px;background:#241536;color:#fff;font:inherit;box-shadow:0 5px 18px #0005;touch-action:manipulation;cursor:pointer}
+    #source-widget button:active{transform:scale(.95);opacity:.85}
+
+    .source-modal{position:fixed;inset:0;z-index:10005;background:#0d0718;color:#f1eaff;display:flex;flex-direction:column;box-sizing:border-box;padding-top:max(10px,env(safe-area-inset-top));padding-bottom:max(10px,env(safe-area-inset-bottom));padding-left:max(10px,env(safe-area-inset-left));padding-right:max(10px,env(safe-area-inset-right))}
+    .source-modal[hidden]{display:none !important}
+    .source-header{flex-shrink:0;display:flex;align-items:center;justify-content:space-between;gap:8px;padding:10px 14px;background:#1c0f30;border:1px solid #43246f;border-radius:14px;margin-bottom:8px;box-shadow:0 4px 16px #0006}
+    .source-header-left{display:flex;align-items:center;gap:8px;min-width:0}
+    .source-tag{display:inline-flex;align-items:center;justify-content:center;padding:2px 7px;background:#ffb34726;border:1px solid #ffb34766;border-radius:6px;color:#ffb347;font:700 12px/1.2 ui-monospace,monospace}
+    .source-header h2{margin:0;font:700 clamp(14px,4vw,17px)/1.2 system-ui,sans-serif;color:#ffeed0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .source-header-actions{display:flex;align-items:center;gap:8px;flex-shrink:0}
+    .source-header-actions button{min-height:40px;padding:8px 14px;border-radius:11px;font:600 13px/1.2 system-ui,sans-serif;cursor:pointer;touch-action:manipulation}
+    .source-header-actions button:active{transform:scale(.95)}
+    #source-copy-btn{background:linear-gradient(135deg,#d9600a,#ff8c1a);border:1px solid #ffb347;box-shadow:0 2px 10px #ff8c1a44;color:#fff;font-weight:700}
+    #source-close-btn{background:#36204f;border:1px solid #79579d;color:#fff}
+    .source-body{flex:1;min-height:0;overflow-y:auto;overflow-x:hidden;background:#140b24;border:1px solid #361b58;border-radius:14px;padding:12px 14px;-webkit-overflow-scrolling:touch}
+    #source-code-pre{margin:0;font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace;font-size:12px;line-height:1.55;color:#dfd3f7;white-space:pre-wrap;word-break:break-all;user-select:text;-webkit-user-select:text}
+    #source-code-pre code{font-family:inherit}
+    .source-toast{position:fixed;left:50%;bottom:max(24px,calc(env(safe-area-inset-bottom) + 16px));transform:translateX(-50%) translateY(12px);background:#27143f;border:1px solid #ffb347;color:#ffeed0;padding:10px 18px;border-radius:20px;font:600 14px/1.3 system-ui,sans-serif;box-shadow:0 8px 24px #0009;z-index:10010;opacity:0;pointer-events:none;transition:opacity .25s ease,transform .25s ease}
+    .source-toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+    </style>
+
+    <div id="source-widget">
+      <button id="source-toggle" type="button" data-spec-id="source-toggle" data-i18n-key="sourceBtn" aria-label="View source code">&lt;/&gt; 原始碼</button>
+    </div>
+
+    <div id="source-viewer" class="source-modal" hidden role="dialog" aria-modal="true" aria-labelledby="source-viewer-title">
+      <div class="source-header">
+        <div class="source-header-left">
+          <span class="source-tag">&lt;/&gt;</span>
+          <h2 id="source-viewer-title" data-i18n-key="sourceTitle">完整原始碼</h2>
+        </div>
+        <div class="source-header-actions">
+          <button id="source-copy-btn" type="button" data-spec-id="source-copy-btn" data-i18n-key="copyBtn" aria-label="Copy source code">複製</button>
+          <button id="source-close-btn" type="button" data-spec-id="source-close-btn" data-i18n-key="closeBtn" aria-label="Close source viewer">返回</button>
+        </div>
+      </div>
+      <div class="source-body">
+        <pre id="source-code-pre"><code></code></pre>
+      </div>
+      <div id="source-toast" class="source-toast" hidden role="status" aria-live="polite"></div>
+    </div>
+
+    <script id="source-viewer-code">
+    //#region @sekai:source-viewer · source code display and copy modal
+    (()=>{
+      let cachedSource='';
+      try{fetch(window.location.href).then(r=>r.ok?r.text():'').then(t=>{if(t&&t.includes('<html'))cachedSource=t;}).catch(()=>{});}catch(e){}
+      let toastTimer=0;
+      function showToast(msg){
+        const toast=document.getElementById('source-toast');
+        if(!toast)return;
+        toast.textContent=msg;toast.hidden=false;toast.classList.add('show');
+        clearTimeout(toastTimer);toastTimer=setTimeout(()=>{toast.classList.remove('show');toast.hidden=true;},2200);
+      }
+      async function openSourceViewer(){
+        if(!cachedSource){try{const res=await fetch(window.location.href);if(res.ok){const text=await res.text();if(text&&text.includes('<html'))cachedSource=text;}}catch(e){}}
+        const code=cachedSource||('<!DOCTYPE html>\n'+document.documentElement.outerHTML);
+        const codeEl=document.querySelector('#source-code-pre code');if(codeEl)codeEl.textContent=code;
+        const modal=document.getElementById('source-viewer');if(modal)modal.hidden=false;
+      }
+      function closeSourceViewer(){const modal=document.getElementById('source-viewer');if(modal)modal.hidden=true;}
+      async function copySourceCode(){
+        const codeEl=document.querySelector('#source-code-pre code');
+        const code=codeEl?.textContent||cachedSource||('<!DOCTYPE html>\n'+document.documentElement.outerHTML);
+        let copied=false;
+        if(navigator.clipboard&&navigator.clipboard.writeText){try{await navigator.clipboard.writeText(code);copied=true;}catch(e){}}
+        if(!copied){try{const ta=document.createElement('textarea');ta.value=code;ta.style.position='fixed';ta.style.opacity='0';ta.style.left='-9999px';document.body.appendChild(ta);ta.focus();ta.select();copied=document.execCommand('copy');document.body.removeChild(ta);}catch(e){}}
+        if(copied){
+          const toastMsg=document.getElementById('source-toast')?.dataset?.msg||'已複製完整原始碼至剪貼簿';
+          showToast(toastMsg);
+          const copyBtn=document.getElementById('source-copy-btn');
+          if(copyBtn){const orig=copyBtn.textContent;copyBtn.textContent='✓ '+(copyBtn.dataset.copiedText||'已複製！');setTimeout(()=>{copyBtn.textContent=orig;},2000);}
+        }
+      }
+      function init(){
+        const toggle=document.getElementById('source-toggle');
+        const closeBtn=document.getElementById('source-close-btn');
+        const copyBtn=document.getElementById('source-copy-btn');
+        if(toggle)toggle.addEventListener('click',openSourceViewer);
+        if(closeBtn)closeBtn.addEventListener('click',closeSourceViewer);
+        if(copyBtn)copyBtn.addEventListener('click',copySourceCode);
+        window.addEventListener('keydown',e=>{if(e.key==='Escape'){const modal=document.getElementById('source-viewer');if(modal&&!modal.hidden)closeSourceViewer();}});
+      }
+      if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init,{once:true});else init();
+    })();
+    //#endregion @sekai:source-viewer
+    </script>
+
+    <script>
+    window.sekaiDebug = {
+      state: function() {
+        return {
+          name: 'Hollow Run',
+          loading: !!window.loadingBar,
+          hollowReady: !!window.__hollowReady,
+          language: document.documentElement.lang || 'zh-TW',
+          sourceViewerOpen: !document.getElementById('source-viewer')?.hidden
+        };
+      },
+      reset: function() {
+        const modal = document.getElementById('source-viewer');
+        if (modal) modal.hidden = true;
+        const menu = document.getElementById('language-options');
+        if (menu) menu.hidden = true;
+        const toggle = document.getElementById('language-toggle');
+        if (toggle) toggle.setAttribute('aria-expanded', 'false');
+      }
+    };
+    window.sekaiContract = {
+      version: 1,
+      interactable: [
+        {id:'language-toggle',selector:'#language-toggle',kind:'button',action:'tap',expect:'state_change'},
+        {id:'source-toggle',selector:'#source-toggle',kind:'button',action:'tap',expect:'state_change'},
+        {id:'source-copy-btn',selector:'#source-copy-btn',kind:'button',action:'tap',expect:'state_change'},
+        {id:'source-close-btn',selector:'#source-close-btn',kind:'button',action:'tap',expect:'state_change'}
+      ]
+    };
+    </script>
+    <script id="sekai-manifest" type="application/json">{"version":1,"elements":[{"id":"language-picker","kind":"container","selector":"#language-picker","safe_area":true},{"id":"language-toggle","kind":"interactive","selector":"#language-toggle","label":"Language selector","safe_area":true},{"id":"source-widget","kind":"container","selector":"#source-widget","safe_area":true},{"id":"source-toggle","kind":"interactive","selector":"#source-toggle","label":"View source code","safe_area":true},{"id":"source-viewer","kind":"container","selector":"#source-viewer","safe_area":true},{"id":"source-copy-btn","kind":"interactive","selector":"#source-copy-btn","label":"Copy source code","safe_area":true},{"id":"source-close-btn","kind":"interactive","selector":"#source-close-btn","label":"Close source viewer","safe_area":true}],"features":[],"audio":[],"rules":[],"removed":[]}</script>
+    
+    <!-- Vite entry point -->
+</body>
+</html>
