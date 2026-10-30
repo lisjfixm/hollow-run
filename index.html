@@ -1961,5 +1961,29 @@ window.loadingBar = new LoadingBar();
     <script id="sekai-manifest" type="application/json">{"version":1,"elements":[{"id":"language-picker","kind":"container","selector":"#language-picker","safe_area":true},{"id":"language-toggle","kind":"interactive","selector":"#language-toggle","label":"Language selector","safe_area":true},{"id":"source-widget","kind":"container","selector":"#source-widget","safe_area":true},{"id":"source-toggle","kind":"interactive","selector":"#source-toggle","label":"View source code","safe_area":true},{"id":"source-viewer","kind":"container","selector":"#source-viewer","safe_area":true},{"id":"source-copy-btn","kind":"interactive","selector":"#source-copy-btn","label":"Copy source code","safe_area":true},{"id":"source-close-btn","kind":"interactive","selector":"#source-close-btn","label":"Close source viewer","safe_area":true}],"features":[],"audio":[],"rules":[],"removed":[]}</script>
     
     <!-- Vite entry point -->
+<script>
+// Offline: disable the SekaiEnding remix/share dialog on game over
+(function(){
+  function noop(){}
+  var dummy = { show: noop, close: noop, open: noop, hide: noop, destroy: noop };
+  function patch(){
+    window.SekaiEnding = {
+      create: function(){ return dummy; },
+      enhance: noop
+    };
+    // Also hide the remix/share chip if remix.js already created it
+    var chip = document.querySelector('.hr-chip');
+    if (chip) chip.remove();
+  }
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', patch);
+  } else {
+    patch();
+  }
+  // Re-patch after a delay in case remix.js overrides it
+  setTimeout(patch, 100);
+  setTimeout(patch, 500);
+})();
+</script>
 </body>
 </html>
