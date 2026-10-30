@@ -1993,5 +1993,9 @@ window.loadingBar = new LoadingBar();
   setTimeout(patch, 1500);
 })();
 </script>
+<style>
+/* Offline: ensure game canvas centers and fills the viewport */
+canvas { display:block !important; position:fixed !important; top:0 !important; left:50% !important; transform:translateX(-50%) !important; }
+</style>
 </body>
 </html>
