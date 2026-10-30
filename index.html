@@ -1962,27 +1962,35 @@ window.loadingBar = new LoadingBar();
     
     <!-- Vite entry point -->
 <script>
-// Offline: disable the SekaiEnding remix/share dialog on game over
+// Offline: strip all Sekai platform chrome (source button, language picker, remix chip, ending dialog)
 (function(){
   function noop(){}
   var dummy = { show: noop, close: noop, open: noop, hide: noop, destroy: noop };
+
+  // Inject CSS to hide Sekai chrome
+  var css = document.createElement('style');
+  css.textContent = '#source-widget,#language-picker,.hr-chip,.hr-toolbar,#source-viewer{display:none!important}';
+  document.head.appendChild(css);
+
   function patch(){
+    // Disable ending dialog
     window.SekaiEnding = {
       create: function(){ return dummy; },
       enhance: noop
     };
-    // Also hide the remix/share chip if remix.js already created it
-    var chip = document.querySelector('.hr-chip');
-    if (chip) chip.remove();
+    // Remove any already-created Sekai chrome elements
+    ['#source-widget','#language-picker','.hr-chip','.hr-toolbar'].forEach(function(sel){
+      document.querySelectorAll(sel).forEach(function(el){ el.remove(); });
+    });
   }
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', patch);
   } else {
     patch();
   }
-  // Re-patch after a delay in case remix.js overrides it
   setTimeout(patch, 100);
   setTimeout(patch, 500);
+  setTimeout(patch, 1500);
 })();
 </script>
 </body>
