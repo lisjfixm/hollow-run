@@ -1994,8 +1994,16 @@ window.loadingBar = new LoadingBar();
 })();
 </script>
 <style>
-/* Offline: ensure game canvas centers and fills the viewport */
-canvas { display:block !important; position:fixed !important; top:0 !important; left:50% !important; transform:translateX(-50%) !important; }
+/* Offline: minimalist style */
+html, body { margin:0 !important; padding:0 !important; background:#0a0a0f !important; overflow:hidden !important; }
+canvas {
+  display:block !important;
+  position:fixed !important;
+  top:0 !important;
+  left:50% !important;
+  transform:translateX(-50%) !important;
+  filter: saturate(0.65) contrast(1.08) brightness(0.95);
+}
 </style>
 </body>
 </html>
